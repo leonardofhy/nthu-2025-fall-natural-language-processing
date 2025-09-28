@@ -1,0 +1,4 @@
+# Global ignores for homework datasets
+hw1/wiki_texts_part_*.txt
+hw1/wiki_texts_part_*.txt.gz
+
