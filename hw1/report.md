@@ -12,6 +12,29 @@
 
 ### Q1. Which embedding model do you use? What are the pre-processing steps? What are the hyperparameter settings? (5%)
 Answer:
+- **Embedding models**
+  - **Pre-trained**: `glove-wiki-gigaword-100` (100-dim GloVe via `gensim.downloader.load`).
+  - **Custom**: `gensim.models.Word2Vec` (skip-gram) trained on sampled Wikipedia text.
+- **Pre-processing steps**
+  - **Google analogy dataset**:
+    - Parse lines; `:` lines denote subcategories. The first five subcategories are labeled “Semantic,” the rest “Syntactic.”
+    - Lowercase tokens before lookup; save to `questions-words.csv`.
+  - **Wikipedia corpus (training)**:
+    - Use pre-cleaned wiki parts (cleaned with `WikiCorpus` defaults; single-character words removed).
+    - Decompress and concatenate into `wiki_texts_combined.txt`, then sample approximately 10% of articles into `wiki_texts_sampled.txt`.
+    - Tokenize with `gensim.utils.simple_preprocess` (lowercasing; minimum token length 2), yielding one token list per article.
+- **Hyperparameter settings**
+  - **Pre-trained GloVe**: vector size 100 (fixed by model name).
+  - **Custom Word2Vec**:
+    - `vector_size=100`
+    - `window=5`
+    - `min_count=5`
+    - `sg=1` (skip-gram)
+    - `negative=10`
+    - `workers=os.cpu_count()`
+    - `epochs=5`
+  - **Analogy inference**:
+    - Use `most_similar(positive=[b, c], negative=[a], topn=1)`; skip if any of a/b/c is OOV; tokens are lowercased before lookup.
 
 ### Q2. What will the performance be like if you sample 5%, 10% and 20% of wiki text in TODO4? (10%, 3% for each)
 Answer:
