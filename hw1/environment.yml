@@ -98,4 +98,3 @@ dependencies:
       - tzdata==2025.2
       - urllib3==2.5.0
       - wrapt==1.17.3
-prefix: /home/leonardo/miniconda3/envs/nthu_nlp_hw1

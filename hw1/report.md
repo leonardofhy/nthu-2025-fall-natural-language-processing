@@ -21,7 +21,7 @@ Answer:
     - Lowercase tokens before lookup; save to `questions-words.csv`.
   - **Wikipedia corpus (training)**:
     - Use pre-cleaned wiki parts (cleaned with `WikiCorpus` defaults; single-character words removed).
-    - Decompress and concatenate into `wiki_texts_combined.txt`, then sample approximately 10% of articles into `wiki_texts_sampled.txt`.
+    - Decompress and concatenate into `wiki_texts_combined.txt`, then sample **20%** of articles into `wiki_texts_sampled.txt` (using `random.random() < 0.2`).
     - Tokenize with `gensim.utils.simple_preprocess` (lowercasing; minimum token length 2), yielding one token list per article.
 - **Hyperparameter settings**
   - **Pre-trained GloVe**: vector size 100 (fixed by model name).
