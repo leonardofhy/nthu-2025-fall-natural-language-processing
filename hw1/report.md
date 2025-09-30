@@ -39,6 +39,33 @@ Answer:
 ### Q2. What will the performance be like if you sample 5%, 10% and 20% of wiki text in TODO4? (10%, 3% for each)
 Answer:
 
+================================================================================
+COMPARISON SUMMARY
+================================================================================
+
+Sampling Rate   Vocab Size      Overall      Semantic     Syntactic   
+--------------------------------------------------------------------------------
+5%              450,347         51.88        64.31        41.55       
+10%             703,054         53.36        65.69        43.12       
+20%             1,081,457       53.83        65.96        43.75       
+
+Sub-Category                        5%           10%          20%          Improvement 
+--------------------------------------------------------------------------------
+: capital-common-countries          93.48        92.49        90.71        -2.77
+: capital-world                     78.36        81.23        82.98        +4.62
+: currency                          11.09        9.12         11.89        +0.81
+: city-in-state                     48.64        48.07        45.48        -3.16
+: family                            77.08        82.61        81.42        +4.35
+: gram1-adjective-to-adverb         11.90        14.52        18.25        +6.35
+: gram2-opposite                    11.58        16.01        14.66        +3.08
+: gram3-comparative                 52.03        47.52        47.60        -4.43
+: gram4-superlative                 20.86        24.78        22.28        +1.43
+: gram5-present-participle          34.94        35.70        33.90        -1.04
+: gram6-nationality-adjective       85.80        87.18        86.93        +1.13
+: gram7-past-tense                  40.45        43.40        42.76        +2.31
+: gram8-plural                      44.59        45.57        51.35        +6.76
+: gram9-plural-verbs                37.93        41.72        44.48        +6.55
+
 ### Q3. What is the performance for different categories or sub-categories when trained on different corpora? (15%)
 #### 3.1 Present your results. (5%)
 Answer:
