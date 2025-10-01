@@ -74,13 +74,7 @@ The table below provides a detailed breakdown of accuracy for each sub-category 
 
 #### **Observations**
 
-The results demonstrate a clear, albeit nuanced, relationship between the size of the training corpus and the model's performance on the analogy task.
-
-1. **Diminishing Returns on Accuracy:** Increasing the training data from 5% to 20% of the Wikipedia corpus yields a consistent improvement in overall accuracy. However, the gains exhibit diminishing returns. The leap from 5% to 10% sampling provides a **\+1.48%** boost in overall accuracy, whereas doubling the data again from 10% to 20% only adds another **\+0.47%**. This suggests that while a larger corpus is beneficial, there is a saturation point where substantially more data is needed for marginal gains.
-2. **Vocabulary Growth vs. Performance:** The vocabulary size expands significantly with each increase in sampling rate. This growth reduces the number of out-of-vocabulary (OOV) words in the analogy test set, which is a key factor in the initial accuracy improvements. However, the slowing performance gains indicate that simply adding more words to the vocabulary does not guarantee better relational understanding for all analogy types.
-3. **Impact on Semantic vs. Syntactic Categories:** The model consistently performs better on semantic analogies than syntactic ones. More data particularly benefits highly regular syntactic relationships, such as **"gram8-plural" (+6.76%)** and **"gram9-plural-verbs" (+6.55%)**, as the model sees more examples of these grammatical patterns. Conversely, some well-defined semantic categories like **"capital-common-countries" (-2.77%)** and **"city-in-state" (-3.16%)** experience a slight performance decline. This may be due to the introduction of noise; as the corpus grows, these words appear in a wider variety of contexts, which can slightly dilute the specific, clean vector relationships (e.g., Paris \- France) learned from a smaller, potentially more focused dataset.
-
-In summary, a larger corpus is generally advantageous for building a robust Word2Vec model, but its impact varies across different types of linguistic relationships. The optimal corpus size represents a trade-off between vocabulary coverage, the reinforcement of regular patterns, and the potential introduction of contextual noise for highly specific semantic analogies.
+Accuracy climbs as we give the model more text, but the early jump (5% → 10%) does most of the work; the next doubling barely moves the needle. A lot of that first gain is simply fewer OOV cases plus reinforcement of common relation patterns. After that, extra tokens add more contextual variety than crisp new signal for some already-saturated categories. Semantic groups stay comfortably ahead of syntactic ones. Plural- and verb‑form categories benefit most (they just need repeated pattern exposure). Meanwhile, categories like capital–common‑countries and city‑in‑state slip a bit, likely because the broader corpus contexts dilute the really tidy pairwise structure (e.g., clean "Paris – France" co-occurrences). So more data still helps, just with diminishing returns and uneven gains across relation types.
 
 ### **Q3. What is the performance for different categories or sub-categories when trained on different corpora? (15%)**
 
@@ -125,47 +119,9 @@ The **Global News Corpus (GNC)** serves as the alternative corpus for this analy
 
 #### **3.3 Explain why the accuracy increases or decreases. (5%)**
 
-The differences arise from domain-specific term distributions, context regularity, and stylistic variation between Wikipedia and the Global News Corpus (GNC):
+News text keeps circling the same geopolitical and economic frames, so relations like (country, capital) and (country, currency) tighten—hence the big currency jump. Wikipedia spreads those terms across historical and descriptive contexts, so their offsets are a bit looser there. Family crashes in news because there just isn’t the same dense parade of explicit kinship phrasing you get in encyclopedic biographies. Most syntactic groups lose a little ground: quotes, headline fragments, and named entities break up clean morphological patterns, and the distribution of verb forms is flatter, so each inflection gets fewer tidy paradigm examples. Nationality adjectives barely move; both domains use them in very formulaic contexts. City–state drifts down: in news, cities appear in noisier mixtures (sports, weather, crime, corporate HQs). Overall, concentrated semantic repetition gives a modest net lift even while morphological regularities blur slightly.
 
-1. Semantic gains (Overall Semantic: +2.49%; capital-world +3.35%; currency +10.65%):
-
-   - High repetition of geopolitical and economic discourse in news strengthens co-occurrence regularities for (country, capital) and (country, currency) relations.
-   - Currency terms in Wikipedia are more diffusely embedded in historical or descriptive contexts; in news, they co-occur densely with country and market descriptors, sharpening vector offsets.
-
-2. Family decline (-12.67%):
-
-   - Biographical and historical narrative in Wikipedia supplies dense relational patterns (father–mother, husband–wife). News allocates fewer tokens to explicit kinship structure, reducing the model’s ability to learn consistent analogy offsets for that category.
-
-3. Small, broad syntactic decreases (most syntactic subcategories -1.3% to -2.3%):
-
-   - Journalistic prose introduces more quotation fragments, headline-style truncations, and named-entity interruptions, mildly increasing contextual variance for morphological transformations (comparative, superlative, tense, plural).
-   - Slightly flatter verb/inflection frequency distributions in news reduce the ratio of clean paradigm examples (e.g., run / ran / running) per total occurrences, diluting pattern strength.
-
-4. Stability in nationality-adjective (+0.32%):
-
-   - Nationality demonyms are frequent and structurally consistent in both corpora (e.g., “French officials,” “German companies”), preserving offset quality regardless of domain shift.
-
-5. City-in-state and modest capital-common-countries drift (−2.36% and +0.57%):
-
-   - U.S. state–city mentions in news are contextually noisier (sports, crime, weather) mixing with organization names, slightly weakening analogical precision.
-   - capital-common-countries remains high because both corpora contain abundant aligned pairs; marginal gain reflects higher recency and repetition in geopolitical reporting.
-
-6. Net effect (Overall +0.29%):
-
-   - Semantic relation sharpening (due to concentrated topical repetition) marginally outweighs widened syntactic variability and reduced kinship relational density.
-
-7. Contributing corpus factors:
-
-   - Context homogeneity: News repeats finance and diplomacy frames, reinforcing a subset of semantic relations.
-   - Named entity density: Improves capital/currency anchoring but injects noise into local grammatical windows.
-   - Relational sparsity: Reduced explicit kinship phrase templates lowers vector regularity for family analogies.
-
-8. Error pattern (typical qualitative observations for such shifts):
-   - Family analogies more often produce high-frequency gendered nouns (e.g., predicting “man” or “person” instead of “husband”).
-   - Comparative/superlative errors skew toward semantically similar base adjectives (e.g., retrieving strong instead of stronger).
-   - Currency improvements manifest as fewer off-topic financial nouns (e.g., “market”) in top-1 predictions.
-
-In summary, domain specialization in news sharpens frequently reiterated geopolitical/economic semantic relations while modestly degrading morphology-sensitive and kinship-oriented categories due to reduced patterned relational exposure and increased stylistic variability.
+Typical error flavor: family analogies over-predict generic gendered nouns; comparative/superlative misses reach for semantically similar base adjectives; improved currency predictions drop irrelevant finance buzzwords. The pattern fits the domain shift narrative rather than indicating a training bug.
 
 ### **Q4. Select a few words and use their embeddings to retrieve the five most similar words and present the results. What do you observe? (10%)**
 
@@ -181,68 +137,37 @@ Using the 20% Wikipedia Word2Vec model (skip-gram, window=5, min_count=5), the f
 
 #### Observations
 
-1. Clear semantic clusters: king and computer yield tightly coherent role/domain sets (royalty hierarchy; computing ecosystem).
-2. Mixed semantic–functional neighbors: good retrieves a synonym (decent), antonym (bad), evaluative adjectives (tough, pretty), and a discourse/context word (always). This reflects distributional (not polarity-aware) similarity.
-3. Morphology & inflection: run ↔ ran; plural/derivational variants (computers, computing) appear with high similarity.
-4. Frequency skew: Some low-frequency but semantically precise words (decent, automation) surface due to distinctive contextual patterns despite smaller counts.
-5. Broad contextual verbs for run (go, start, winning) indicate multi-sense blending (motion, process initiation, sports scoring).
-6. Pronoun reflexive herself near woman shows syntactic/positional co-occurrence effects (window size capturing subject–reflexive contexts).
+"King" and "computer" sit in very clean, domain-centric clusters. "Good" mixes a synonym, an antonym, and evaluative adjectives because distributional similarity ignores polarity. "Run" pulls in multiple senses at once—motion, competition, process—since there’s only one vector. Low-frequency but context-sharp terms like "automation" still surface because their neighborhoods are distinctive. The reflexive "herself" near "woman" is a positional/co-occurrence artifact, not deep semantic closeness.
 
 #### Causes
 
-- Single-sense embeddings merge senses (run: motion / sports / process).
-- Skip-gram with window=5 favors functional co-occurrence (always near evaluative adjectives).
-- Antonym proximity (good–bad) is typical in distributional models sharing topical contexts.
-- Frequency differences do not dominate similarity once minimum count is satisfied; contextual distinctiveness drives ranking.
+Single vectors collapse senses. Medium window size blends topical + functional signals. Antonyms co-occur in contrastive or evaluative frames, so they cluster. Above the min_count threshold, distinct context patterns outweigh raw frequency.
 
-#### Possible Improvements
+#### Light Improvement Ideas
 
-- Increase min_count (e.g., 15–20) + sample=1e-4 to smooth high-frequency words and reduce mid-frequency noise.
-- Larger window (≈8) for topical cohesion (could help king cluster with dynasty terms) or smaller (≈3) for tighter syntactic neighbors (may reduce always).
-- Post-filter antonyms using external lexicons if polarity purity is desired (optional).
-- Sense disambiguation: consider training sense embeddings (e.g., clustering contexts) if multi-sense words are critical.
+• Raise min_count and/or adjust subsampling to trim noisy mid-frequency items.  
+• Try a narrower window for cleaner syntactic neighbors or a wider one for broader topical cohesion.  
+• (Optional) Polarity filtering if antonym adjacency is undesirable.  
+• Sense splitting only if multi-sense precision becomes a priority.
 
 #### Summary
 
-The model produces coherent semantic neighborhoods for concrete or domain-focused terms (king, computer). Abstract or polysemous words (good, run) show blended semantic, functional, and antonymic relationships—an expected limitation of basic Word2Vec without polarity or sense modeling.
+Concrete, role-bound terms cluster crisply; evaluative and polysemous words blend senses and even opposites—standard behavior for basic Word2Vec.
 
 ### **Q5. Anything that can strengthen your report. (5%)**
 
-Proposed (future work) enhancements below are not implemented unless explicitly described in earlier sections. They are prioritized for impact vs. effort; you may select a subset in practice.
+Below are focused additions that would most increase rigor if I extend this work:
 
-1. Coverage & baseline parity  
-   Report custom Word2Vec vs GloVe with identical evaluation; add per–sub-category OOV counts and in‑vocab accuracy to separate model errors from coverage gaps.
+1. Coverage & in‑vocab clarity: For each sub-category, show OOV count, raw accuracy, and in‑vocab accuracy to isolate model errors vs coverage gaps.
+2. Statistical confidence: Bootstrap the analogy set (e.g., 1k resamples) to get 95% CIs and test if sampling gains are significant.
+3. Lean learning curve + mini ablation: Add 2% + 15% points; tiny grid (window 3/5/8, dim 100/200) under a fixed token budget to see where semantic vs syntactic relations saturate.
+4. Structured error sketch: Tag frequent miss types (antonym, generic filler, wrong lemma, inflection variant) to guide targeted fixes.
+5. Bias probe: One WEAT (gender–career vs gender–family) vs GloVe, report only effect size.
+6. Downstream sanity: Small text classification (e.g., AG News) with averaged frozen embeddings to connect intrinsic and extrinsic performance.
+7. Reproducibility & efficiency: Log seeds, tokens, tokens/sec, hardware; optional float16 export (memory vs <0.5% accuracy shift); simple script/Makefile.
 
-2. Statistical confidence  
-   Bootstrap analogy quadruples (e.g., 1,000 resamples) to derive 95% CIs and test significance of 5%→10%→20% improvements.
+Nice-to-have extras: PIP loss (10%→20%) for drift, POS neighborhood purity, PCA panels of morphological offsets.
 
-3. Learning curve + light ablation  
-   Add 2% and 15% points; small grid (window 3/5/8; negative 5/10; dim 100/200) under a fixed token budget; plot semantic vs syntactic gains and tokens/sec.
+Rationale (brief): Coverage separation and confidence intervals prevent overclaiming; a tiny ablation shows remaining headroom; error + bias views add qualitative depth; a downstream check anchors practical relevance; reproducibility metadata builds trust.
 
-4. OOV diagnostics (granular)  
-   For each sub-category show: skipped/total, raw accuracy, in‑vocab accuracy. Highlight coverage-driven drops (e.g., early currency).
-
-5. Structured error taxonomy  
-   Label top mistakes: antonym, wrong lemma same POS, generic high-frequency filler, inflectional variant. Summarize counts to guide remedies (e.g., morphological augmentation).
-
-6. Bias/fairness probe (WEAT)  
-   Simple gender–career vs gender–family WEAT comparing custom vs GloVe; report effect size only (no sensitive example expansion).
-
-7. Additional intrinsic signals  
-   MEN, WordSim-353, SimLex-999 Spearman ρ; complements analogy (less morphology-weighted), clarifying semantic quality trade‑offs.
-
-8. Relation & neighborhood consistency  
-   (a) Parallelism: mean cosine of (capital−country) offsets to centroid (Wikipedia vs News).  
-   (b) Angular neighborhood purity: % of top‑k neighbors sharing coarse POS for selected words (quantifies syntactic drift).
-
-9. Reproducibility & efficiency  
-   Log seeds (Python/NumPy/gensim), wall time, tokens, tokens/sec, hardware + versions; supply a Makefile / script to regenerate models end‑to‑end.
-
-10. Practical & deployment aspects  
-    (a) Downstream sanity: tiny AG News classifier using frozen averaged embeddings (macro‑F1 vs GloVe).  
-    (b) Float16 (or quantized) embeddings: memory vs <0.5% accuracy delta.  
-    (c) Visualization: PCA of morphological offsets + t‑SNE density for a polysemous term (run) + 5 curated failure examples (ranked outputs).
-
-Optional micro add‑ons (if time permits): frequency‑bucket normalized accuracies; PIP loss between 10% and 20% models to quantify drift.
-
-Summary: Prioritizing coverage separation, statistical confidence, structured error + bias analysis, and a lightweight downstream check would most effectively elevate rigor with moderate added effort.
+Disclaimer: All items above are proposals only; current implementation covers 5/10/20% sampling, corpus comparison, analogy evaluation, and a similarity neighborhood inspection.
