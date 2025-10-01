@@ -13,6 +13,8 @@
 
 ### **Q1. Which embedding model do you use? What are the pre-processing steps? What are the hyperparameter settings? (5%)**
 
+> Disclaimer: The content in this Q1 answer (description, steps, and explanations) includes material generated with the assistance of generative AI.
+
 Answer:
 
 - **Embedding models**
@@ -40,6 +42,8 @@ Answer:
     - Use most_similar(positive=\[b, c\], negative=\[a\], topn=1); skip if any of a/b/c is OOV; tokens are lowercased before lookup.
 
 ### **Q2. What will the performance be like if you sample 5%, 10% and 20% of wiki text in TODO4? (10%, 3% for each)**
+
+> Disclaimer: The content in this Q2 answer (performance tables, analysis, and observations) includes material generated with the assistance of generative AI.
 
 Answer:
 
@@ -77,6 +81,8 @@ The table below provides a detailed breakdown of accuracy for each sub-category 
 Accuracy climbs as we give the model more text, but the early jump (5% → 10%) does most of the work; the next doubling barely moves the needle. A lot of that first gain is simply fewer OOV cases plus reinforcement of common relation patterns. After that, extra tokens add more contextual variety than crisp new signal for some already-saturated categories. Semantic groups stay comfortably ahead of syntactic ones. Plural- and verb‑form categories benefit most (they just need repeated pattern exposure). Meanwhile, categories like capital–common‑countries and city‑in‑state slip a bit, likely because the broader corpus contexts dilute the really tidy pairwise structure (e.g., clean "Paris – France" co-occurrences). So more data still helps, just with diminishing returns and uneven gains across relation types.
 
 ### **Q3. What is the performance for different categories or sub-categories when trained on different corpora? (15%)**
+
+> Disclaimer: The content in this Q3 answer (comparisons, tables, and reasoning) includes material generated with the assistance of generative AI.
 
 To analyze the impact of the training corpus, this section compares the Word2Vec model trained on **20% of Wikipedia** with a model trained on a **"Global News Corpus (GNC)"** of similar size.
 
@@ -125,6 +131,8 @@ Typical error flavor: family analogies over-predict generic gendered nouns; comp
 
 ### **Q4. Select a few words and use their embeddings to retrieve the five most similar words and present the results. What do you observe? (10%)**
 
+> Disclaimer: The content in this Q4 answer (tables, similarity analysis, and observations) includes material generated with the assistance of generative AI.
+
 Using the 20% Wikipedia Word2Vec model (skip-gram, window=5, min_count=5), the five most similar words (cosine similarity) and training frequencies:
 
 | Target            | Similar Words (sim, freq)                                                                                                                   |
@@ -155,6 +163,8 @@ Single vectors collapse senses. Medium window size blends topical + functional s
 Concrete, role-bound terms cluster crisply; evaluative and polysemous words blend senses and even opposites—standard behavior for basic Word2Vec.
 
 ### **Q5. Anything that can strengthen your report. (5%)**
+
+> Disclaimer: The content in this Q5 answer (suggestions, rationale, and wording) includes material generated with the assistance of generative AI.
 
 Below are focused additions that would most increase rigor if I extend this work:
 
