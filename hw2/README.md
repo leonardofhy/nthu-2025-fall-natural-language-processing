@@ -24,7 +24,7 @@ LSTM-based sequence-to-sequence model for arithmetic calculations.
    GPU (CUDA 12.1):
 
    ```bash
-   conda install pytorch torchvision torchaudio pytorch-cuda=12.1 -c pytorch -c nvidia
+   conda install pytorch torchvision torchaudio pytorch-cuda=12.1 -c pytorch -c nvidia -y
    ```
 
 4. **Install dependencies:**

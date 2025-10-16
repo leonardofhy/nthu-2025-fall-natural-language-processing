@@ -3,7 +3,7 @@ pandas
 torch
 matplotlib
 seaborn
-opencc-python-reimplemented
+OpenCC
 scikit-learn
 tqdm
 jupyter
