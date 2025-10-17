@@ -4,7 +4,7 @@
 
 ---
 
-## 1. Hyper-parameters Configuration (5%)
+## Q1. Hyper-parameters Configuration (5%)
 
 Present your hyper-parameters in training, including:
 - Learning rate
@@ -36,7 +36,7 @@ The following hyperparameters were used in the LSTM arithmetic model training:
 
 ---
 
-## 2. Model Architecture Comparison: RNN/GRU vs LSTM (10%)
+## Q2. Model Architecture Comparison: RNN/GRU vs LSTM (10%)
 
 If you use RNN or GRU instead of LSTM, what will happen to the quality of your answer generation? Why?
 
@@ -117,7 +117,7 @@ For sequence-to-sequence arithmetic tasks with long-range dependencies, **LSTM i
 
 ---
 
-## 3. Training Set Generalization: Three-digit to Two-digit Numbers (10%)
+## Q3. Training Set Generalization: Three-digit to Two-digit Numbers (10%)
 
 If we construct a training set using three-digit numbers while the evaluation set is constructed from two-digit numbers, what will happen to the quality of your answer generation?
 
@@ -126,7 +126,7 @@ If we construct a training set using three-digit numbers while the evaluation se
 
 ---
 
-## 4. Impact of Incorrect Training Data (5%)
+## Q4. Impact of Incorrect Training Data (5%)
 
 If we construct a training set that includes 20% incorrect answers, how will this affect the quality of the generated responses? Present some examples.
 
@@ -138,7 +138,7 @@ If we construct a training set that includes 20% incorrect answers, how will thi
 
 ---
 
-## 5. Gradient Clipping (5%)
+## Q5. Gradient Clipping (5%)
 
 Why do we need gradient clipping during training?
 
@@ -258,7 +258,7 @@ For this arithmetic task with variable-length sequences and stacked LSTMs, gradi
 
 ---
 
-## 6. Additional Insights (5%)
+## Q6. Additional Insights (5%)
 
 Anything that can strengthen your report.
 
