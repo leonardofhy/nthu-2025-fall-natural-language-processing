@@ -1,3 +1,24 @@
+<!-- 
+================================================================================
+DISCLAIMER AND POLICY COMPLIANCE
+================================================================================
+
+GENERATIVE AI USAGE POLICY:
+This report was developed with assistance from GitHub Copilot (a Generative AI tool).
+Per the assignment policy, all Generative AI usage must be explicitly specified
+in both code comments and reports. This disclaimer serves as notification of such usage.
+
+POLICY COMPLIANCE NOTES:
+✓ Generative AI usage is disclosed in this file
+✓ All external sources and references are cited with links
+✓ No content has been plagiarized from classmates or other reports
+✓ Original analysis and implementation details are provided
+
+For code-related disclaimers, see the corresponding main.py file.
+
+================================================================================
+-->
+
 # Natural Language Processing - Homework 2 Report
 
 **Total Weight: 45%**
