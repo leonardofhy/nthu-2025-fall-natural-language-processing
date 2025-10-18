@@ -221,17 +221,17 @@ $$\text{Generalization: Simple} \rightarrow \text{Complex} \quad \times$$
 
 **Likely Successful Cases (75-85%):**
 ```
-Input: "23+45="  → Predicted: "68"   ✓ (basic carry works)
-Input: "56+89="  → Predicted: "145"  ✓ (single carry handled)
-Input: "90-34="  → Predicted: "56"   ✓ (subtraction transfers)
-Input: "99+99="  → Predicted: "198"  ✓ (similar to 3-digit patterns)
+Input: "23+45="  → Predicted: "68"   [Correct] (basic carry works)
+Input: "56+89="  → Predicted: "145"  [Correct] (single carry handled)
+Input: "90-34="  → Predicted: "56"   [Correct] (subtraction transfers)
+Input: "99+99="  → Predicted: "198"  [Correct] (similar to 3-digit patterns)
 ```
 
 **Likely Failure Cases (10-20%):**
 ```
-Input: "10+5="   → Predicted: "015"  ✗ (extra leading zero)
-Input: "3+2="    → Predicted: "05"   ✗ (single-digit confusion)
-Input: "12+8="   → Predicted: "200"  ✗ (catastrophic length error)
+Input: "10+5="   → Predicted: "015"  [Error] (extra leading zero)
+Input: "3+2="    → Predicted: "05"   [Error] (single-digit confusion)
+Input: "12+8="   → Predicted: "200"  [Error] (catastrophic length error)
 ```
 
 **Error Pattern Summary:**
@@ -453,11 +453,11 @@ When confronted with noisy training data, the following techniques may ameliorat
 #### **Conclusion**
 
 **Impact Summary:**
-- ✗ Accuracy degradation of 20-25 percentage points (from ~90% to ~65-75%)
-- ✗ Training convergence time increases by factor of 2-3×
-- ✗ Predictions exhibit inconsistency and unreliability
-- ✗ Systematic errors emerge in carry operations and sequence length generation
-- ✓ Model retains partial arithmetic capability (not complete failure)
+- Accuracy degradation of 20-25 percentage points (from ~90% to ~65-75%)
+- Training convergence time increases by factor of 2-3×
+- Predictions exhibit inconsistency and unreliability
+- Systematic errors emerge in carry operations and sequence length generation
+- Model retains partial arithmetic capability (not complete failure)
 
 **Key Finding:** Label noise constitutes one of the most detrimental data quality issues due to direct corruption of the supervision signal. For precision-critical tasks such as arithmetic computation, 20% label noise renders the model **unsuitable for production deployment**, though this result demonstrates that neural networks possess some inherent robustness to noisy supervision.
 
@@ -518,10 +518,10 @@ g & \text{otherwise}
 - $g = 0.4$ → unchanged (within bounds)
 
 **Effects:**
-- ✓ Bounds all gradients to range $[-1.0, 1.0]$
-- ✓ Prevents numerical overflow
-- ✓ Preserves gradient direction (magnitude only is affected)
-- ✓ Enables stable learning and convergence
+- Bounds all gradients to range $[-1.0, 1.0]$
+- Prevents numerical overflow
+- Preserves gradient direction (magnitude only is affected)
+- Enables stable learning and convergence
 
 #### **4. Task-Specific Necessity of Gradient Clipping**
 
@@ -647,14 +647,14 @@ decoder_target = batch_y[:, 1:]  # Shifted by 1
 ```
 
 **Benefits:**
-- ✓ **Faster convergence:** Model always sees correct context during training
-- ✓ **Stable training:** No error compounding from wrong predictions
-- ✓ **Simpler implementation:** No need for scheduled sampling
+- **Faster convergence:** Model always sees correct context during training
+- **Stable training:** No error compounding from wrong predictions
+- **Simpler implementation:** No need for scheduled sampling
 
 **Limitations:**
-- ✗ **Exposure bias:** Model never sees its own mistakes during training
-- ✗ **Train-test mismatch:** At inference, model generates autoregressively and may drift from training distribution
-- ✗ **Error accumulation:** One wrong character can cascade into completely wrong answer
+- **Exposure bias:** Model never sees its own mistakes during training
+- **Train-test mismatch:** At inference, model generates autoregressively and may drift from training distribution
+- **Error accumulation:** One wrong character can cascade into completely wrong answer
 
 **Why It Works Well for Arithmetic:**
 - Answers are **deterministic** (no ambiguity like in translation)
@@ -673,15 +673,15 @@ decoder_target = batch_y[:, 1:]  # Shifted by 1
 **This Model's Approach: Character-Level Processing**
 
 **Advantages:**
-- ✓ **Compact vocabulary:** Only 18 tokens (digits 0-9, operators, special tokens)
-- ✓ **Complete generalization:** Capable of handling any numeric value, including those never encountered during training
-- ✓ **Absence of OOV issues:** Every possible equation employs known characters
-- ✓ **Natural compositionality:** Model learns how individual digits combine to form numbers
+- **Compact vocabulary:** Only 18 tokens (digits 0-9, operators, special tokens)
+- **Complete generalization:** Capable of handling any numeric value, including those never encountered during training
+- **Absence of OOV issues:** Every possible equation employs known characters
+- **Natural compositionality:** Model learns how individual digits combine to form numbers
 
 **Disadvantages:**
-- ✗ **Extended sequences:** "123" requires 3 tokens rather than 1
-- ✗ **Increased timesteps:** Requires LSTM to process additional steps
-- ✗ **Compositional learning requirement:** Must learn that sequential digits "1", "2", "3" represent "123"
+- **Extended sequences:** "123" requires 3 tokens rather than 1
+- **Increased timesteps:** Requires LSTM to process additional steps
+- **Compositional learning requirement:** Must learn that sequential digits "1", "2", "3" represent "123"
 
 **Alternative Approach: Number-Level Tokenization**
 - Treating "123" as a single token would reduce sequence length
@@ -704,7 +704,7 @@ Parameters: ~1.5M total
 ```
 
 **Model Capacity Assessment:**
-✓ **Sufficient for basic 2-3 digit arithmetic:**
+**Sufficient for basic 2-3 digit arithmetic:**
 - Algorithmic pattern complexity remains manageable (deterministic rules)
 - Two-layer architecture provides adequate depth for carry operation logic
 - 256 hidden units can effectively represent place value reasoning
@@ -713,8 +713,8 @@ Parameters: ~1.5M total
 
 | Operation | Difficulty | Recommended Architecture |
 |-----------|-----------|-------------------------|
-| **2-digit +/-** | Low | Current model (256 hidden, 2 layers) ✓ |
-| **3-digit +/-** | Medium | Current model sufficient ✓ |
+| **2-digit +/-** | Low | Current model (256 hidden, 2 layers) [Adequate] |
+| **3-digit +/-** | Medium | Current model sufficient [Adequate] |
 | **Multi-digit ×** | High | Increase to 512 hidden, 3-4 layers |
 | **Division** | Very High | 512-1024 hidden, attention mechanism |
 | **With parentheses** | Extreme | Transformer with hierarchical attention |
@@ -800,15 +800,15 @@ Cause: Decoder initialization failure or attention collapse
 #### **7. Real-World Applicability**
 
 **Practical Application Domains:**
-- ✓ **Educational tools:** Interactive arithmetic tutoring and feedback systems
-- ✓ **Math word problems:** Equation extraction and automated solving from natural language text
-- ✓ **Symbolic reasoning research:** Investigating neural network capacity for algorithmic learning
+- **Educational tools:** Interactive arithmetic tutoring and feedback systems
+- **Math word problems:** Equation extraction and automated solving from natural language text
+- **Symbolic reasoning research:** Investigating neural network capacity for algorithmic learning
 
 **Limitations and Failure Scenarios:**
-- ✗ **Large numbers (5+ digits):** Accuracy degrades exponentially with digit count
-- ✗ **Complex operations (√, ^, log):** Exceed LSTM representational capacity
-- ✗ **Production calculators:** Symbolic methods achieve 1000× speed and 100% accuracy
-- ✗ **Floating-point arithmetic:** Requires fundamentally different numerical representation
+- **Large numbers (5+ digits):** Accuracy degrades exponentially with digit count
+- **Complex operations (√, ^, log):** Exceed LSTM representational capacity
+- **Production calculators:** Symbolic methods achieve 1000× speed and 100% accuracy
+- **Floating-point arithmetic:** Requires fundamentally different numerical representation
 
 **Key Insight:**
 This implementation serves as a **proof-of-concept** demonstrating that:
@@ -841,10 +841,10 @@ The primary contribution lies **not** in replacing symbolic calculators, but in 
 #### **Conclusion**
 
 This sequence-to-sequence LSTM model successfully demonstrates:
-- ✓ Neural networks **possess the capacity** to learn arithmetic operations from character sequences
-- ✓ LSTM memory gates **provide sufficient capability** for multi-step carry propagation
-- ✓ Teacher forcing **facilitates** stable training for deterministic generation tasks
-- ✓ Character-level tokenization **enables superior generalization** compared to number-level alternatives
+- Neural networks **possess the capacity** to learn arithmetic operations from character sequences
+- LSTM memory gates **provide sufficient capability** for multi-step carry propagation
+- Teacher forcing **facilitates** stable training for deterministic generation tasks
+- Character-level tokenization **enables superior generalization** compared to number-level alternatives
 
 Principal limitations:
 - Exposure bias resulting from full teacher forcing
