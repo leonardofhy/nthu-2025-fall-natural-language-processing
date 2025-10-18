@@ -21,7 +21,7 @@ The following hyperparameters were employed in training the sequence-to-sequence
 |---|---|---|
 | **Architecture** | Seq2Seq Encoder-Decoder | Separate encoder (processes equation) and decoder (generates answer) |
 | **Batch Size** | 64 | Number of samples processed per training iteration |
-| **Epochs** | 10 | Total number of complete passes through the training dataset |
+| **Epochs** | 30 | Total number of complete passes through the training dataset |
 | **Embedding Dimension** | 256 | Dimension of character embeddings for both encoder and decoder |
 | **Hidden Dimension** | 256 | Size of LSTM hidden state at each timestep |
 | **Number of LSTM Layers** | 2 | Stacked LSTM layers for both encoder and decoder |
