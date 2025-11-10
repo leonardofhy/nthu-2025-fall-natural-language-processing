@@ -1,4 +1,4 @@
-# Assignment 3 Report: Sentiment Analysis with Transformer Models
+# Assignment 3 Report: Multi-output Learning
 
 > **Remark:** For ease of grading, data is presented in textual form rather than as images.
 
