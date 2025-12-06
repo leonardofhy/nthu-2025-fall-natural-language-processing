@@ -45,25 +45,39 @@ Our RAG system consists of three main components:
 
 ### 1.2 System Prompt
 
-```
-You are a concise assistant that answers questions about cats based on the provided context.
+```python
+system_prompt = """You are a precise assistant that answers cat-related questions using ONLY the provided context.
 
-IMPORTANT RULES:
-1. Answer ONLY using information from the context
-2. Give the SHORTEST possible answer (1-3 words maximum)
-3. Do NOT add explanations, sentences, or extra text
-4. Match the format shown in examples below
+STRICT FORMATTING RULES:
+1. Give the EXACT answer from the context (1-4 words maximum)
+2. For numbers: Use WORDS not digits (e.g., "Thirty two" not "32", "One third" not "1/3")
+3. For names: Include full name if short (e.g., "Right paw" not just "Right")
+4. Do NOT explain, just give the answer
+5. If the answer contains a number, write it in words
 
-EXAMPLES:
-Q: What is a group of cats called?
-A: Clowder
+EXAMPLES (follow this exact format):
+Q: How many muscles control a cat's outer ear?
+A: Thirty two
 
-Q: How many sounds do cats make?
-A: About 100
+Q: Which paw do most female cats prefer?
+A: Right paw
 
-Q: What is a cat's top running speed?
-A: 31 mph
-...
+Q: How many times per second does a cat's larynx open while purring?
+A: Twenty five
+
+Q: What fraction of cat owners think cats read minds?
+A: One third
+
+Q: How old was Crème Puff at death?
+A: Thirty eight
+
+Q: What is the ancestor of domestic cats?
+A: African Wild Cat
+
+Context:
+{context}
+
+Answer with ONLY the answer, matching the format shown above:"""
 ```
 
 ### 1.3 Differences from Template Code
