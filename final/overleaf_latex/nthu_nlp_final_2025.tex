@@ -94,7 +94,7 @@
 
 
 \begin{abstract}
-  In this work, we present a robust solution for the Google QUEST Q\&A Labeling challenge, which aims to estimate subjective quality scores for question-answer pairs. Our approach significantly improves upon a strong baseline (23rd place solution) by systematically addressing its limitations. We transition from a BERT-based architecture to DeBERTa-v3-Large to leverage its disentangled attention mechanism, and we identify that increasing the sequence length to 1024 tokens is critical for capturing the full context of Q\&A pairs. Furthermore, we address the label noise inherent in subjective ratings by replacing the standard Binary Cross Entropy (BCE) loss with a ranking-aware objective combined with a differentiable Soft Spearman loss. Finally, we adopt a two-phase training strategy to stabilize the learning of question-specific context. Our final model achieves a Cross-Validation (CV) Spearman correlation of 0.4228, outperforming the baseline's 0.4195, and demonstrates the importance of ranking-oriented objectives in subjective quality estimation tasks.
+  In this work, we present a robust solution for the Google QUEST Q\&A Labeling challenge, developed as the \textbf{final term project} for the Natural Language Processing course at National Tsing Hua University. Our approach significantly improves upon a strong baseline (23rd place solution) by systematically addressing its limitations. We transition from a BERT-based architecture to DeBERTa-v3-Large to leverage its disentangled attention mechanism, and we identify that increasing the sequence length to 1024 tokens is critical for capturing the full context of Q\&A pairs. Furthermore, we address the label noise inherent in subjective ratings by replacing the standard Binary Cross Entropy (BCE) loss with a ranking-aware objective combined with a differentiable Soft Spearman loss. Finally, we adopt a two-phase training strategy to stabilize the learning of question-specific context. Our final model achieves a Cross-Validation (CV) Spearman correlation of 0.4228, outperforming the baseline's 0.4195, and demonstrates the importance of ranking-oriented objectives in subjective quality estimation tasks.
 \end{abstract}
 
 
@@ -283,7 +283,7 @@ In this report, we demonstrated that modernizing the backbone architecture to De
 
 
 \begin{ack}
-This work was completed as part of the Natural Language Processing course under the \textbf{Artificial Intelligence for Natural Language Technology Program} offered by the \textbf{Taiwan Artificial Intelligence College Alliance (TAICA)}. The course was hosted by National Tsing Hua University (NTHU) and instructed by \textbf{Prof. Hung-Yu Kao}. We thank the instructor and teaching assistants for their guidance and feedback by TAICA.
+This work was completed as the \textbf{final term project} for the Natural Language Processing course under the \textbf{Artificial Intelligence for Natural Language Technology Program} offered by the \textbf{Taiwan Artificial Intelligence College Alliance (TAICA)}. The course was hosted by National Tsing Hua University (NTHU) and instructed by \textbf{Prof. Hung-Yu Kao}. We thank the instructor and teaching assistants for their guidance and feedback by TAICA.
 
 Experiments were conducted on a workstation equipped with two NVIDIA RTX PRO 6000 Blackwell Server Edition GPUs (96GB VRAM each). We also acknowledge the use of Kaggle Notebooks for inference submissions.
 \end{ack}
