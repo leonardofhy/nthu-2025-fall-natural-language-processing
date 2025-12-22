@@ -55,6 +55,8 @@
 \usepackage{microtype}      % microtypography
 \usepackage{xcolor}         % colors
 \usepackage{graphicx}       % images
+\usepackage{tikz}           % diagrams
+\usetikzlibrary{shapes.geometric, arrows, positioning, fit, backgrounds}
 \graphicspath{ {images/} }
 
 % Note. For the workshop paper template, both \title{} and \workshoptitle{} are required, with the former indicating the paper title shown in the title and the latter indicating the workshop title displayed in the footnote. 
@@ -126,7 +128,31 @@ The performance is evaluated using the \textbf{Spearman's rank correlation coeff
 \end{figure}
 
 \section{Related Works}
-We select the 23rd place solution from the Kaggle competition as our primary baseline. This solution employs a \texttt{bert-base-uncased} architecture with a maximum sequence length of 512 tokens. A key feature of this baseline is its use of a custom pooling strategy, which concatenates the \texttt{[CLS]} and \texttt{[SEP]} token representations from the last four hidden layers handled by separate heads. The model is trained using a Binary Cross Entropy (BCE) loss function, which treats the regression problem as a soft classification task. To mitigate overfitting on the small dataset, the baseline adopts a "Two-Phase Training" strategy: first training on the question title and body only (Question-Only phase) to learn robust question representations, followed by fine-tuning on the full Q\&A pairs. Post-processing involves LightGBM stacking to refine predictions. While effective, this approach is limited by the BERT architecture's context window and the mismatch between the BCE objective and the ranking-based evaluation metric.
+
+\subsection{Baseline Overview}
+We select the 23rd place solution from the Kaggle competition as our primary baseline. This solution employs a \texttt{bert-base-uncased} architecture with a maximum sequence length of 512 tokens. A key feature of this baseline is its use of a custom pooling strategy, which concatenates the \texttt{[CLS]} and \texttt{[SEP]} token representations from the last four hidden layers handled by separate heads. The model is trained using a \textbf{Ranking + Binary Cross Entropy (BCE)} loss function, which combines pairwise ranking with soft classification. To mitigate overfitting on the small dataset, the baseline adopts a "Two-Phase Training" strategy: first training on the question title and body only (Question-Only phase) to learn robust question representations, followed by fine-tuning on the full Q\&A pairs. Post-processing involves LightGBM stacking to refine predictions.
+
+\subsection{Baseline Analysis}
+Table \ref{tab:comparison} summarizes the key differences between the baseline approach and our proposed solution.
+
+\begin{table}[h]
+  \caption{Comparison of baseline and our proposed approach.}
+  \label{tab:comparison}
+  \centering
+  \begin{tabular}{lcc}
+    \toprule
+    \textbf{Aspect} & \textbf{Baseline (23rd)} & \textbf{Ours} \\
+    \midrule
+    Backbone & BERT-Base (110M) & DeBERTa-v3-Large (435M) \\
+    Sequence Length & 512 & 1024 \\
+    Pooling & CLS + SEP (Last 4 layers) & WLP + Attention \\
+    Loss Function & Ranking + BCE & Ranking + Soft Spearman \\
+    Ensembling & 30 Snapshots & Single Model \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+The baseline's primary limitation is its reliance on the BERT architecture's 512-token context window, which causes truncation of longer Q\&A pairs. Additionally, while BCE is a reasonable proxy for regression, it does not directly optimize for the Spearman correlation metric used in evaluation.
 
 
 \section{Methods}
@@ -135,6 +161,45 @@ We propose several architectural and methodological improvements to address the 
 \subsection{Model Architecture}
 We replace the BERT backbone with \texttt{microsoft/deberta-v3-large}. DeBERTa (Decoding-enhanced BERT with disentangled attention) improves upon BERT and RoBERTa by using a disentangled attention mechanism and an enhanced mask decoder. This is particularly beneficial for our task, which involves determining the quality of answers relative to questions, often requiring the model to capture long-range dependencies and subtle relative positions of tokens.
 
+Figure \ref{fig:architecture} illustrates our model architecture.
+
+\begin{figure}[h]
+    \centering
+    \begin{tikzpicture}[
+        node distance=0.8cm,
+        box/.style={rectangle, draw, rounded corners, minimum width=3cm, minimum height=0.6cm, align=center, font=\small},
+        smallbox/.style={rectangle, draw, rounded corners, minimum width=2cm, minimum height=0.5cm, align=center, font=\footnotesize},
+        arrow/.style={->, >=stealth, thick}
+    ]
+        % Input
+        \node[box, fill=blue!10] (input) {\texttt{[CLS]} Title Question \texttt{[SEP]} Answer \texttt{[SEP]}};
+        
+        % Encoder
+        \node[box, fill=green!15, below=of input] (encoder) {DeBERTa-v3-Large Encoder (24 layers)};
+        
+        % Hidden states
+        \node[box, fill=yellow!15, below=of encoder] (hidden) {Hidden States (Last 4 Layers)};
+        
+        % WLP
+        \node[box, fill=orange!15, below=of hidden] (wlp) {Weighted Layer Pooling};
+        
+        % Attention Pooling
+        \node[box, fill=red!15, below=of wlp] (attn) {Attention Pooling};
+        
+        % Output
+        \node[box, fill=purple!15, below=of attn] (output) {Linear Head $\rightarrow$ 30 Outputs};
+        
+        % Arrows
+        \draw[arrow] (input) -- (encoder);
+        \draw[arrow] (encoder) -- (hidden);
+        \draw[arrow] (hidden) -- (wlp);
+        \draw[arrow] (wlp) -- (attn);
+        \draw[arrow] (attn) -- (output);
+    \end{tikzpicture}
+    \caption{Our model architecture. Input tokens are processed by DeBERTa-v3-Large, then the last 4 hidden layers are aggregated via Weighted Layer Pooling, followed by Attention Pooling to produce a fixed-size representation for the final linear head.}
+    \label{fig:architecture}
+\end{figure}
+
 \subsection{Pooling Strategy}
 Unlike the baseline's custom pooling, we adopt a \textbf{Weighted Layer Pooling} followed by \textbf{Attention Pooling}. We extract the hidden states from the last four layers of the encoder and compute a weighted average, where the weights are learnable parameters. These weighted embeddings are then passed through an Attention Pooling layer, which learns to emphasize the most informative tokens in the sequence before generating the final fixed-size representation for classification.
 
@@ -142,12 +207,13 @@ Unlike the baseline's custom pooling, we adopt a \textbf{Weighted Layer Pooling}
 We identified that the baseline's 512-token limit was a significant bottleneck, causing critical information to be truncated. We increase the maximum sequence length to \textbf{1024 tokens}. This ensures that the model can attend to the entire question body and answer text simultaneously, which is crucial for evaluating metrics like "detailedness" or "relevance".
 
 \subsection{Optimization Objectives}
-The evaluation metric is Spearman's rank correlation, which relies on the relative ordering of predictions rather than their absolute values. Standard losses like BCE or MSE penalize absolute error, which can be suboptimal for noisy subjective labels. We replace BCE with a multi-objective loss function:
-\begin{enumerate}
-    \item \textbf{Ranking Loss}: A margin-based ranking loss that encourages the model to score higher-quality samples higher than lower-quality ones.
-    \item \textbf{Soft Spearman Loss}: A differentiable approximation of the Spearman correlation, enabling direct optimization of the evaluation metric.
-\end{enumerate}
-The final loss is a weighted combination of these ranking-aware objectives.
+The evaluation metric is Spearman's rank correlation, which relies on the relative ordering of predictions rather than their absolute values. The baseline uses a Ranking + BCE loss. While the ranking component is beneficial, BCE penalizes absolute error, which can be suboptimal for noisy subjective labels. We keep the Ranking Loss but replace BCE with a \textbf{Soft Spearman Loss}---a differentiable approximation of the Spearman correlation, enabling direct optimization of the evaluation metric.
+
+The final loss is a weighted combination of these ranking-aware objectives:
+\begin{equation}
+    \mathcal{L} = \lambda_{\text{rank}} \mathcal{L}_{\text{ranking}} + \lambda_{\text{spearman}} \mathcal{L}_{\text{soft-spearman}}
+\end{equation}
+
 
 \subsection{Training Strategy}
 We adopt the baseline's effective \textbf{Two-Phase Training} strategy. In Phase 1, we train the model for 5 epochs on Question-Only data to stabilize the encoder's understanding of the question context. In Phase 2, we train for another 5 epochs on the full Question-Answer pairs.
@@ -174,8 +240,8 @@ Increasing the sequence length to 1024 (Step 1) provided an immediate recovery a
     \toprule
     Step & Configuration & CV Score & Improvement \\
     \midrule
-    Baseline 1 & BERT-Base (512, Hybrid, BCE, Custom Pool) & 0.4195 & - \\
-    Baseline 2 & Naive DeBERTa (512, Hybrid, BCE, WLP+Attn) & 0.3642 & (The Dip) \\
+    Baseline 1 & BERT-Base (512, Ranking+BCE, Custom Pool) & 0.4195 & - \\
+    Baseline 2 & Naive DeBERTa (512, Ranking+BCE, WLP+Attn) & 0.3642 & (The Dip) \\
     \midrule
     Step 1 & Long Context (1024) & 0.3797 & +0.0155 \\
     Step 2 & Add Ranking + Soft Spearman Loss & 0.4026 & +0.0229 \\
@@ -184,6 +250,15 @@ Increasing the sequence length to 1024 (Step 1) provided an immediate recovery a
     \bottomrule
   \end{tabular}
 \end{table}
+
+Figure \ref{fig:ablation} visualizes the progressive performance improvements from our ablation study.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.9\textwidth]{ablation_chart.png}
+    \caption{Ablation study showing progressive CV score improvements. The dashed red line indicates the BERT baseline performance (0.4195). Starting from a performance dip when naively switching to DeBERTa, each optimization step contributes to surpassing the baseline.}
+    \label{fig:ablation}
+\end{figure}
 
 \subsection{Discussion}
 \subsubsection{The CV vs LB Paradox}
@@ -216,21 +291,15 @@ go at the end of the paper before the list of references.
 % References follow the acknowledgments.
 % You can use BibTeX or manual references.
 
-{
-\small
+{\small
 
-[1] Alexander, J.A.\ \& Mozer, M.C.\ (1995) Template-based algorithms for
-connectionist rule extraction. In G.\ Tesauro, D.S.\ Touretzky and T.K.\ Leen
-(eds.), {\it Advances in Neural Information Processing Systems 7},
-pp.\ 609--616. Cambridge, MA: MIT Press.
+[1] He, P., Gao, J., \& Chen, W. (2023). DeBERTaV3: Improving DeBERTa using ELECTRA-Style Pre-Training with Gradient-Disentangled Embedding Sharing. In {\it International Conference on Learning Representations}. \url{https://openreview.net/forum?id=sE7-XhLxHA}
 
-[2] Bower, J.M.\ \& Beeman, D.\ (1995) {\it The Book of GENESIS: Exploring
-  Realistic Neural Models with the GEneral NEural SImulation System.}  New York:
-TELOS/Springer--Verlag.
+[2] Devlin, J., Chang, M.-W., Lee, K., \& Toutanova, K. (2019). BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding. In {\it Proceedings of the 2019 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies}, pp.\ 4171--4186. \url{https://aclanthology.org/N19-1423}
 
-[3] Hasselmo, M.E., Schnell, E.\ \& Barkai, E.\ (1995) Dynamics of learning and
-recall at excitatory recurrent synapses and cholinergic modulation in rat
-hippocampal region CA3. {\it Journal of Neuroscience} {\bf 15}(7):5249-5262.
+[3] Spearman, C. (1904). The Proof and Measurement of Association between Two Things. {\it The American Journal of Psychology}, {\bf 15}(1):72--101.
+
+[4] Google. (2020). Google QUEST Q\&A Labeling. {\it Kaggle Competition}. \url{https://www.kaggle.com/competitions/google-quest-challenge}
 }
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
