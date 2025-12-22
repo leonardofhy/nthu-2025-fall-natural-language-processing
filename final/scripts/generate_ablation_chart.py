@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 # Data from the experiments table
-steps = ['Baseline 2\n(Naive DeBERTa)', 'Step 1\n(1024 Context)', 'Step 2\n(Ranking+Spearman)', 'Step 3\n(Large Model)', 'Final\n(2-Phase)']
+steps = ['Exp 0', 'Exp 1', 'Exp 2', 'Exp 3', 'Final']
 cv_scores = [0.3642, 0.3797, 0.4026, 0.4218, 0.4228]
 improvements = [0, 0.0155, 0.0229, 0.0192, 0.0010]
 
@@ -38,8 +38,8 @@ for bar, score, imp in zip(bars, cv_scores, improvements):
 
 # Labels and title
 ax.set_ylabel('CV Spearman Correlation', fontsize=12, fontweight='bold')
-ax.set_xlabel('Optimization Steps', fontsize=12, fontweight='bold')
-ax.set_title('Ablation Study: Progressive Performance Improvements', fontsize=14, fontweight='bold')
+ax.set_xlabel('Experiment', fontsize=12, fontweight='bold')
+ax.set_title('Progressive Performance Improvements', fontsize=14, fontweight='bold')
 
 # Y-axis limits
 ax.set_ylim(0.35, 0.44)
