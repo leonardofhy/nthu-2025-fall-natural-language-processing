@@ -57,6 +57,7 @@
 \usepackage{xcolor}         % colors
 \usepackage{graphicx}       % images
 \usepackage{tikz}           % diagrams
+\usepackage{fontawesome5}   % icons (GitHub)
 \usetikzlibrary{shapes.geometric, arrows, positioning, fit, backgrounds}
 \graphicspath{ {images/} }
 
@@ -97,6 +98,10 @@
 \begin{abstract}
   In this work, we present a robust solution for the Google QUEST Q\&A Labeling challenge, developed as the \textbf{final term project} for the Natural Language Processing course at National Tsing Hua University. Our approach significantly improves upon a strong baseline (23rd place solution) by systematically addressing its limitations. We transition from a BERT-based architecture to DeBERTa-v3-Large to leverage its disentangled attention mechanism, and we identify that increasing the sequence length to 1024 tokens is critical for capturing the full context of Q\&A pairs. Furthermore, we address the label noise inherent in subjective ratings by replacing the standard Binary Cross Entropy (BCE) loss with a ranking-aware objective combined with a differentiable Soft Spearman loss. Finally, we adopt a two-phase training strategy to stabilize the learning of question-specific context. Our final model achieves a Cross-Validation (CV) Spearman correlation of 0.4228, outperforming the baseline's 0.4195, and demonstrates the importance of ranking-oriented objectives in subjective quality estimation tasks.
 \end{abstract}
+
+\begin{center}
+  \faGithub\ \textbf{Code:} \url{https://github.com/leonardofhy/google_quest_qa_labeling}
+\end{center}
 
 
 \section{Task Description}
@@ -345,7 +350,7 @@ Our single-model CV score (0.4228) surpasses the baseline (0.4195), though our P
 \begin{ack}
 This work was completed as the \textbf{final term project} for the Natural Language Processing course under the \textbf{Artificial Intelligence for Natural Language Technology Program} offered by the \textbf{Taiwan Artificial Intelligence College Alliance (TAICA)}. The course was hosted by National Tsing Hua University (NTHU) and instructed by \textbf{Prof. Hung-Yu Kao}. We thank the instructor and teaching assistants for their guidance and feedback.
 
-Experiments were conducted on a workstation equipped with two NVIDIA RTX PRO 6000 Blackwell Server Edition GPUs (96GB VRAM each). We also acknowledge the use of Kaggle Notebooks for inference submissions.
+Experiments were conducted on a workstation equipped with two NVIDIA RTX PRO 6000 Blackwell Server Edition GPUs (96GB VRAM each). We also acknowledge the use of Kaggle Notebooks for inference submissions. Our code is publicly available at \url{https://github.com/leonardofhy/google_quest_qa_labeling}.
 \end{ack}
 
 \section*{References}
@@ -356,12 +361,25 @@ Experiments were conducted on a workstation equipped with two NVIDIA RTX PRO 600
 
 [1] He, P., Gao, J., \& Chen, W. (2023). DeBERTaV3: Improving DeBERTa using ELECTRA-Style Pre-Training with Gradient-Disentangled Embedding Sharing. In {\it International Conference on Learning Representations}. \url{https://openreview.net/forum?id=sE7-XhLxHA}
 
-[2] Devlin, J., Chang, M.-W., Lee, K., \& Toutanova, K. (2019). BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding. In {\it Proceedings of the 2019 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies}, pp.\ 4171--4186. \url{https://aclanthology.org/N19-1423}
+[2] Devlin, J., Chang, M.-W., Lee, K., \& Toutanova, K. (2019). BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding. In {\it Proceedings of NAACL-HLT}, pp.\ 4171--4186. \url{https://aclanthology.org/N19-1423}
 
-[3] Spearman, C. (1904). The Proof and Measurement of Association between Two Things. {\it The American Journal of Psychology}, {\bf 15}(1):72--101.
+[3] Liu, Y., Ott, M., Goyal, N., Du, J., Joshi, M., Chen, D., Levy, O., Lewis, M., Zettlemoyer, L., \& Stoyanov, V. (2019). RoBERTa: A Robustly Optimized BERT Pretraining Approach. {\it arXiv preprint arXiv:1907.11692}.
 
-[4] Google. (2020). Google QUEST Q\&A Labeling. {\it Kaggle Competition}. \url{https://www.kaggle.com/competitions/google-quest-challenge}
-[5] Blondel, M., Teboul, O., Berthet, Q., \& Djolonga, J. (2020). Fast Differentiable Sorting and Ranking. In {\it Proceedings of the 37th International Conference on Machine Learning}, pp.\ 950--960. \url{https://arxiv.org/abs/2002.08871}
+[4] Blondel, M., Teboul, O., Berthet, Q., \& Djolonga, J. (2020). Fast Differentiable Sorting and Ranking. In {\it Proceedings of ICML}, pp.\ 950--960. \url{https://arxiv.org/abs/2002.08871}
+
+[5] Loshchilov, I., \& Hutter, F. (2019). Decoupled Weight Decay Regularization. In {\it International Conference on Learning Representations}. \url{https://openreview.net/forum?id=Bkg6RiCqY7}
+
+[6] Sun, C., Qiu, X., Xu, Y., \& Huang, X. (2019). How to Fine-Tune BERT for Text Classification? In {\it Chinese Computational Linguistics}, pp.\ 194--206. Springer.
+
+[7] Peters, M., Neumann, M., Iyyer, M., Gardner, M., Clark, C., Lee, K., \& Zettlemoyer, L. (2018). Deep Contextualized Word Representations. In {\it Proceedings of NAACL-HLT}, pp.\ 2227--2237. \url{https://aclanthology.org/N18-1202}
+
+[8] Huang, G., Li, Y., Pleiss, G., Liu, Z., Hopcroft, J. E., \& Weinberger, K. Q. (2017). Snapshot Ensembles: Train 1, Get M for Free. In {\it International Conference on Learning Representations}. \url{https://openreview.net/forum?id=BJYwwY9ll}
+
+[9] Inoue, H. (2019). Multi-Sample Dropout for Accelerated Training and Better Generalization. {\it arXiv preprint arXiv:1905.09788}.
+
+[10] Ke, G., Meng, Q., Finley, T., Wang, T., Chen, W., Ma, W., Ye, Q., \& Liu, T.-Y. (2017). LightGBM: A Highly Efficient Gradient Boosting Decision Tree. In {\it Advances in Neural Information Processing Systems}, vol.\ 30, pp.\ 3146--3154.
+
+[11] Google. (2020). Google QUEST Q\&A Labeling. {\it Kaggle Competition}. \url{https://www.kaggle.com/competitions/google-quest-challenge}
 }
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
