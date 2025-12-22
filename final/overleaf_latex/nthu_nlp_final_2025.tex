@@ -51,6 +51,7 @@
 \usepackage{url}            % simple URL typesetting
 \usepackage{booktabs}       % professional-quality tables
 \usepackage{amsfonts}       % blackboard math symbols
+\usepackage{amsmath}        % for \text command in equations
 \usepackage{nicefrac}       % compact symbols for 1/2, etc.
 \usepackage{microtype}      % microtypography
 \usepackage{xcolor}         % colors
@@ -100,7 +101,7 @@
 
 \section{Task Description}
 
-The Google QUEST Q\&A Labeling competition challenges participants to improved automated methods for estimating the quality of question-answer pairs from the StackExchange dataset. The goal is to predict human-generated quality scores for various subjective aspects of Q\&A pairs.
+The Google QUEST Q\&A Labeling competition challenges participants to improve automated methods for estimating the quality of question-answer pairs from the StackExchange dataset. The goal is to predict human-generated quality scores for various subjective aspects of Q\&A pairs.
 
 \subsection{Problem Definition}
 This is a multi-label regression task. For each sample, the input consists of a question title, a question body, and an answer. The output is a set of 30 scalar values in the range $[0, 1]$, representing 30 distinct quality labels. These labels cover two main categories:
@@ -127,10 +128,12 @@ The performance is evaluated using the \textbf{Spearman's rank correlation coeff
     \label{fig:human_dims}
 \end{figure}
 
-\section{Related Works}
+\section{Related Work}
 
 \subsection{Baseline Overview}
-We select the 23rd place solution from the Kaggle competition as our primary baseline. This solution employs a \texttt{bert-base-uncased} architecture with a maximum sequence length of 512 tokens. A key feature of this baseline is its use of a custom pooling strategy, which concatenates the \texttt{[CLS]} and \texttt{[SEP]} token representations from the last four hidden layers handled by separate heads. The model is trained using a \textbf{Ranking + Binary Cross Entropy (BCE)} loss function, which combines pairwise ranking with soft classification. To mitigate overfitting on the small dataset, the baseline adopts a "Two-Phase Training" strategy: first training on the question title and body only (Question-Only phase) to learn robust question representations, followed by fine-tuning on the full Q\&A pairs. Post-processing involves LightGBM stacking to refine predictions.
+We select the 23rd place solution from the Kaggle competition as our primary baseline. This solution employs a \texttt{bert-base-uncased} architecture with a maximum sequence length of 512 tokens. A key feature is its custom pooling strategy, which concatenates the \texttt{[CLS]} and \texttt{[SEP]} token representations from the last four hidden layers.
+
+The model is trained using a \textbf{Ranking + Binary Cross Entropy (BCE)} loss function. To mitigate overfitting on the small dataset, the baseline adopts a ``Two-Phase Training'' strategy: first training on question title and body only to learn robust question representations, followed by fine-tuning on full Q\&A pairs. Post-processing involves LightGBM stacking.
 
 \subsection{Baseline Analysis}
 Table \ref{tab:comparison} summarizes the key differences between the baseline approach and our proposed solution.
@@ -156,10 +159,10 @@ The baseline's primary limitation is its reliance on the BERT architecture's 512
 
 
 \section{Methods}
-We propose several architectural and methodological improvements to address the limitations of the baseline.
+We introduce four key improvements over the baseline: (1) a stronger backbone, (2) improved pooling, (3) longer context, and (4) ranking-aware optimization.
 
 \subsection{Model Architecture}
-We replace the BERT backbone with \texttt{microsoft/deberta-v3-large}. DeBERTa (Decoding-enhanced BERT with disentangled attention) improves upon BERT and RoBERTa by using a disentangled attention mechanism and an enhanced mask decoder. This is particularly beneficial for our task, which involves determining the quality of answers relative to questions, often requiring the model to capture long-range dependencies and subtle relative positions of tokens.
+We replace the BERT backbone with \texttt{microsoft/deberta-v3-large} [1]. DeBERTa uses a disentangled attention mechanism that separates content and position information, which is beneficial for capturing the relationship between questions and answers across long contexts.
 
 Figure \ref{fig:architecture} illustrates our model architecture.
 
@@ -203,13 +206,23 @@ Figure \ref{fig:architecture} illustrates our model architecture.
 \subsection{Pooling Strategy}
 Unlike the baseline's custom pooling, we adopt a \textbf{Weighted Layer Pooling} followed by \textbf{Attention Pooling}. We extract the hidden states from the last four layers of the encoder and compute a weighted average, where the weights are learnable parameters. These weighted embeddings are then passed through an Attention Pooling layer, which learns to emphasize the most informative tokens in the sequence before generating the final fixed-size representation for classification.
 
-\subsection{Input Optimization}
-We identified that the baseline's 512-token limit was a significant bottleneck, causing critical information to be truncated. We increase the maximum sequence length to \textbf{1024 tokens}. This ensures that the model can attend to the entire question body and answer text simultaneously, which is crucial for evaluating metrics like "detailedness" or "relevance".
+\subsection{Context Length Extension}
+The baseline's 512-token limit was a significant bottleneck, causing critical information to be truncated. We increase the maximum sequence length to \textbf{1024 tokens}, ensuring that the model can attend to the entire question body and answer text simultaneously. This is crucial for evaluating metrics like ``detailedness'' or ``relevance.''
 
 \subsection{Optimization Objectives}
-The evaluation metric is Spearman's rank correlation, which relies on the relative ordering of predictions rather than their absolute values. The baseline uses a Ranking + BCE loss. While the ranking component is beneficial, BCE penalizes absolute error, which can be suboptimal for noisy subjective labels. We keep the Ranking Loss but replace BCE with a \textbf{Soft Spearman Loss}---a differentiable approximation of the Spearman correlation, enabling direct optimization of the evaluation metric.
+The evaluation metric is Spearman's rank correlation, which relies on the relative ordering of predictions rather than their absolute values. The baseline uses a Ranking + BCE loss. While the ranking component is beneficial, BCE penalizes absolute error, which can be suboptimal for noisy subjective labels. We keep the Ranking Loss but replace BCE with a \textbf{Soft Spearman Loss}---a differentiable approximation of the Spearman correlation inspired by [5], enabling direct optimization of the evaluation metric.
 
-The final loss is a weighted combination of these ranking-aware objectives:
+The Soft Spearman Loss approximates the discrete ranking operation using a sigmoid-based soft rank function:
+\begin{equation}
+    r_i^{\text{soft}} = \sum_{j} \sigma\left(\frac{x_i - x_j}{\tau}\right)
+\end{equation}
+where $\tau$ is a temperature parameter controlling the sharpness of the approximation. The final loss is:
+\begin{equation}
+    \mathcal{L}_{\text{soft-spearman}} = 1 - \rho(r^{\text{soft}}_{\text{pred}}, r^{\text{soft}}_{\text{target}})
+\end{equation}
+where $\rho$ denotes Pearson correlation applied to the soft ranks.
+
+The final loss is a weighted combination of ranking-aware objectives:
 \begin{equation}
     \mathcal{L} = \lambda_{\text{rank}} \mathcal{L}_{\text{ranking}} + \lambda_{\text{spearman}} \mathcal{L}_{\text{soft-spearman}}
 \end{equation}
@@ -220,70 +233,117 @@ We adopt the baseline's effective \textbf{Two-Phase Training} strategy. In Phase
 
 
 \section{Experiments}
-% Detail your experimental setup.
-% Show your results (including final leaderboard score).
-% Use tables and figures to present data.
 
 \subsection{Experimental Setup}
-We perform 5-fold cross-validation on the training set. The model is optimized using the AdamW optimizer with a layer-wise learning rate decay. We evaluate performance using the mean Spearman correlation coefficient across all 30 target columns.
-
-\subsection{Results}
-Table \ref{tab:results} summarizes our experimental results. We start with the BERT-base baseline (Baseline 1). Simply switching to DeBERTa-base with our new pooling strategy but keeping the 512 context length (Baseline 2) resulted in a performance drop ("The Dip"), likely due to the model being larger but "starved" of context or the change in pooling logic not being effective without sufficient information.
-
-Increasing the sequence length to 1024 (Step 1) provided an immediate recovery and boost (+0.0155), confirming that context is the primary bottleneck. The introduction of the Ranking and Soft Spearman losses (Step 2) yielded the largest single improvement (+0.0229), proving that aligning the loss function with the metric is critical. Finally, scaling to the Large model and using the full training schedule (Step 3 \& Final) achieved our best single-model performance of \textbf{0.4228}, surpassing the baseline's 0.4195.
+We perform 5-fold cross-validation on the training set. The model is optimized using the AdamW optimizer with a layer-wise learning rate decay ($\gamma=0.9$). Table \ref{tab:hyperparams} summarizes our key hyperparameters.
 
 \begin{table}[h]
-  \caption{Comparison of experimental results. CV Score reports the mean Spearman correlation across 5 folds.}
-  \label{tab:results}
+  \caption{Hyperparameters used in our experiments.}
+  \label{tab:hyperparams}
   \centering
-  \begin{tabular}{llcc}
+  \begin{tabular}{lc}
     \toprule
-    Step & Configuration & CV Score & Improvement \\
+    \textbf{Hyperparameter} & \textbf{Value} \\
     \midrule
-    Baseline 1 & BERT-Base (512, Ranking+BCE, Custom Pool) & 0.4195 & - \\
-    Baseline 2 & Naive DeBERTa (512, Ranking+BCE, WLP+Attn) & 0.3642 & (The Dip) \\
-    \midrule
-    Step 1 & Long Context (1024) & 0.3797 & +0.0155 \\
-    Step 2 & Add Ranking + Soft Spearman Loss & 0.4026 & +0.0229 \\
-    Step 3 & Larger Model (DeBERTa-Large) & 0.4218 & +0.0192 \\
-    \textbf{Final} & \textbf{Longer 2-Phase Training} & \textbf{0.4228} & \textbf{+0.0010} \\
+    Max Sequence Length & 1024 \\
+    Batch Size & 8 \\
+    Gradient Accumulation Steps & 2 \\
+    Encoder Learning Rate & $1 \times 10^{-5}$ \\
+    Head Learning Rate & $1 \times 10^{-4}$ \\
+    Weight Decay & $1 \times 10^{-2}$ \\
+    Layer Decay ($\gamma$) & 0.9 \\
+    $\lambda_{\text{rank}}$ & 1.0 \\
+    $\lambda_{\text{spearman}}$ & 0.5 \\
+    Spearman Temperature ($\tau$) & 0.1 \\
+    Phase 1 Epochs & 5 \\
+    Phase 2 Epochs & 5 \\
     \bottomrule
   \end{tabular}
 \end{table}
 
-Figure \ref{fig:ablation} visualizes the progressive performance improvements from our ablation study.
+\subsection{Results}
+Table \ref{tab:results} summarizes our experimental results, including both Cross-Validation (CV) scores and Kaggle Leaderboard (LB) scores where available. We start with the BERT-base baseline. Our initial attempt (Exp 0) naively switched to DeBERTa-base with mean pooling while keeping the 512 context length, resulting in a significant performance drop (``The Dip''), which we analyze in detail below.
+
+Increasing the sequence length to 1024 (Exp 1) provided an immediate recovery and boost (+0.0155), confirming that context is the primary bottleneck. The introduction of the Ranking and Soft Spearman losses (Exp 2) yielded the largest single improvement (+0.0229), proving that aligning the loss function with the metric is critical. Finally, scaling to the Large model and using the full training schedule (Exp 3 \& Final) achieved our best single-model performance of \textbf{0.4228}, surpassing the baseline's CV of 0.4195.
+
+\begin{table}[h]
+  \caption{Comparison of experimental results. CV Score reports the mean Spearman correlation across 5 folds. LB scores are from Kaggle submissions.}
+  \label{tab:results}
+  \centering
+  \begin{tabular}{llcccc}
+    \toprule
+    \textbf{Exp} & \textbf{Configuration} & \textbf{CV Score} & \textbf{Public LB} & \textbf{Private LB} \\
+    \midrule
+    Baseline & BERT-Base + 30 Snapshot Ensemble & 0.4195 & 0.4576 & 0.4123 \\
+    Exp 0 & DeBERTa-Base (512, Mean Pool) & 0.3642 & - & - \\
+    \midrule
+    Exp 1 & + Long Context (1024) & 0.3797 & - & - \\
+    Exp 2 & + Ranking + Soft Spearman Loss & 0.4026 & - & - \\
+    Exp 3 & + DeBERTa-v3-Large & 0.4218 & - & - \\
+    \textbf{Final} & \textbf{+ Full 2-Phase Training} & \textbf{0.4228} & \textbf{0.4447} & \textbf{0.4066} \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+Figure \ref{fig:ablation} visualizes the progressive performance improvements.
 
 \begin{figure}[h]
     \centering
     \includegraphics[width=0.9\textwidth]{ablation_chart.png}
-    \caption{Ablation study showing progressive CV score improvements. The dashed red line indicates the BERT baseline performance (0.4195). Starting from a performance dip when naively switching to DeBERTa, each optimization step contributes to surpassing the baseline.}
+    \caption{Progressive CV improvements. Dashed red line = BERT baseline (0.4195).}
     \label{fig:ablation}
 \end{figure}
 
-\subsection{Discussion}
-\subsubsection{The CV vs LB Paradox}
-Observing Table \ref{tab:results}, we note a paradox: while our final single-model CV score (\textbf{0.4228}) surpasses the baseline's CV (0.4195), our Private Leaderboard (LB) score (0.4066) is lower than the baseline's (0.4144).
+\paragraph{Understanding ``The Dip.''}
+The severe performance drop when naively switching from BERT to DeBERTa (0.4195 $\rightarrow$ 0.3642) warrants explanation. We identify two compounding factors:
 
-\textbf{Explanation: The 2-Hour Inference Limit.} The competition imposes a strict 2-hour limit on inference. The baseline uses the lightweight \texttt{bert-base-uncased} architecture (110M parameters). This computational efficiency allowed the baseline solution to employ \textbf{Snapshot Ensembling}, averaging predictions from over 30 model checkpoints within the time limit. Ensembling is known to significantly boost generalization and stability, directly improving the LB score.
+\textbf{Pooling Mismatch.} The baseline explicitly extracted \texttt{[CLS]} and \texttt{[SEP]} token features, which encodes the structural boundary between the question and answer segments. Our naive DeBERTa implementation used mean pooling across all tokens, effectively blending the question and answer representations into a structure-less mixture, losing this critical boundary information.
 
-In contrast, our solution uses \texttt{deberta-v3-large} (435M parameters), which is significantly more computationally expensive. Due to the 2-hour constraint, we were limited to identifying and submitting a \textbf{single best model}. While our single model demonstrates superior quality per parameter (evidenced by the higher CV), it lacks the variance-reduction benefits of an ensemble.
+\textbf{Context Starvation.} DeBERTa's disentangled attention mechanism relies heavily on relative position information across the full sequence context. Truncating inputs to 512 tokens breaks long-range dependencies that the model was designed to exploit, hurting DeBERTa more severely than BERT's absolute positional encoding.
 
-\textbf{Conclusion:} We successfully improved the \textbf{model quality} through architectural and objective optimizations, but the baseline maintained an advantage in \textbf{ensemble capacity} due to the specific inference time constraints of this competition.
+\textbf{Conclusion:} A superior architecture cannot overcome information loss from truncation and structural blindness from inappropriate pooling. This insight directly motivated our switch to longer context (1024 tokens) and structured attention pooling.
+
+
+\section{Discussion}
+
+\subsection{The CV vs. LB Paradox}
+Observing Table \ref{tab:results}, we note a paradox: while our final single-model CV score (\textbf{0.4228}) surpasses the baseline's CV (0.4195), our Private Leaderboard (LB) score (0.4066) is lower than the baseline's (0.4123).
+
+The competition imposes a strict 2-hour limit on inference. The baseline uses the lightweight \texttt{bert-base-uncased} architecture (110M parameters), which allowed it to employ \textbf{Snapshot Ensembling}---averaging predictions from over 30 model checkpoints within the time limit. Ensembling significantly boosts generalization and stability.
+
+In contrast, our \texttt{deberta-v3-large} (435M parameters) is significantly more expensive. Due to the 2-hour constraint, we were limited to a \textbf{single best model}. While our single model demonstrates superior quality (evidenced by higher CV), it lacks the variance-reduction benefits of an ensemble.
+
+\subsection{Limitations}
+Our approach has several limitations:
+\begin{itemize}
+    \item \textbf{Ensemble Constraint:} The 2-hour inference limit prevented us from ensembling multiple checkpoints, which likely caused the gap between CV and LB scores.
+    \item \textbf{Single Baseline Comparison:} We only compared against one baseline (23rd place). Comparison with top-10 solutions would provide more comprehensive evaluation.
+    \item \textbf{No Post-Processing:} Unlike the baseline's LightGBM stacking, we did not employ post-processing techniques.
+\end{itemize}
 
 \begin{figure}[h]
     \centering
     \includegraphics[width=0.8\textwidth]{lb_screenshot.png}
-    \caption{Kaggle Leaderboard Screenshot. Showing our final position and score compared to the baseline.}
+    \caption{Kaggle Leaderboard screenshot showing our final position.}
     \label{fig:lb_score}
 \end{figure}
 
 
 \section{Conclusion}
-In this report, we demonstrated that modernizing the backbone architecture to DeBERTa-v3 and, crucially, aligning the training objectives with the ranking nature of the task are key to improving performance on the Google QUEST Q\&A Labeling challenge. We showed that simple MSE/BCE losses are insufficient for subjective scoring tasks and that a Ranking + Soft Spearman loss significantly boosts correlation. Additionally, we highlighted the importance of sufficient context length (1024 tokens) for Transformer-based models to effective process long Q\&A pairs. Future work could explore advanced post-processing techniques such as distribution matching or stacking to further bridge the gap between CV and Private Leaderboard scores.
+
+We demonstrated that modernizing the backbone to DeBERTa-v3 and aligning training objectives with the ranking nature of the task are key to improving performance on the Google QUEST Q\&A Labeling challenge. Our key findings are:
+
+\begin{enumerate}
+    \item \textbf{Ranking-aware losses matter:} Replacing BCE with a Ranking + Soft Spearman loss significantly boosts Spearman correlation.
+    \item \textbf{Context length is critical:} Extending from 512 to 1024 tokens prevents information loss in long Q\&A pairs.
+    \item \textbf{Architecture alone is insufficient:} ``The Dip'' shows that superior architectures cannot compensate for pooling mismatch and context truncation.
+\end{enumerate}
+
+Our single-model CV score (0.4228) surpasses the baseline (0.4195), though our Private LB score (0.4066) is lower than the baseline's (0.4123) due to ensemble constraints. Future work could explore model distillation or quantization to enable efficient ensembling within the 2-hour inference limit.
 
 
 \begin{ack}
-This work was completed as the \textbf{final term project} for the Natural Language Processing course under the \textbf{Artificial Intelligence for Natural Language Technology Program} offered by the \textbf{Taiwan Artificial Intelligence College Alliance (TAICA)}. The course was hosted by National Tsing Hua University (NTHU) and instructed by \textbf{Prof. Hung-Yu Kao}. We thank the instructor and teaching assistants for their guidance and feedback by TAICA.
+This work was completed as the \textbf{final term project} for the Natural Language Processing course under the \textbf{Artificial Intelligence for Natural Language Technology Program} offered by the \textbf{Taiwan Artificial Intelligence College Alliance (TAICA)}. The course was hosted by National Tsing Hua University (NTHU) and instructed by \textbf{Prof. Hung-Yu Kao}. We thank the instructor and teaching assistants for their guidance and feedback.
 
 Experiments were conducted on a workstation equipped with two NVIDIA RTX PRO 6000 Blackwell Server Edition GPUs (96GB VRAM each). We also acknowledge the use of Kaggle Notebooks for inference submissions.
 \end{ack}
@@ -301,12 +361,9 @@ Experiments were conducted on a workstation equipped with two NVIDIA RTX PRO 600
 [3] Spearman, C. (1904). The Proof and Measurement of Association between Two Things. {\it The American Journal of Psychology}, {\bf 15}(1):72--101.
 
 [4] Google. (2020). Google QUEST Q\&A Labeling. {\it Kaggle Competition}. \url{https://www.kaggle.com/competitions/google-quest-challenge}
+[5] Blondel, M., Teboul, O., Berthet, Q., \& Djolonga, J. (2020). Fast Differentiable Sorting and Ranking. In {\it Proceedings of the 37th International Conference on Machine Learning}, pp.\ 950--960. \url{https://arxiv.org/abs/2002.08871}
 }
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\appendix
-
-\section{Appendix}
-% Optional technical appendices
 \end{document}
