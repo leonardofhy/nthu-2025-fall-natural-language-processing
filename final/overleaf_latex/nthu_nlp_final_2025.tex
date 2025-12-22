@@ -174,37 +174,71 @@ Figure \ref{fig:architecture} illustrates our model architecture.
 \begin{figure}[h]
     \centering
     \begin{tikzpicture}[
-        node distance=0.8cm,
-        box/.style={rectangle, draw, rounded corners, minimum width=3cm, minimum height=0.6cm, align=center, font=\small},
-        smallbox/.style={rectangle, draw, rounded corners, minimum width=2cm, minimum height=0.5cm, align=center, font=\footnotesize},
-        arrow/.style={->, >=stealth, thick}
+        node distance=0.6cm,
+        % Main component boxes
+        mainbox/.style={
+            rectangle, draw=gray!70, rounded corners=3pt, 
+            minimum width=5.5cm, minimum height=0.7cm, 
+            align=center, font=\small\sffamily,
+            line width=0.8pt
+        },
+        % Annotation style
+        annot/.style={font=\tiny\sffamily\color{gray!70}, align=left},
+        % Arrow style
+        arrow/.style={->, >=stealth, thick, draw=gray!60}
     ]
-        % Input
-        \node[box, fill=blue!10] (input) {\texttt{[CLS]} Title Question \texttt{[SEP]} Answer \texttt{[SEP]}};
+        % Input Layer
+        \node[mainbox, fill=blue!8, draw=blue!40] (input) {
+            \texttt{[CLS]} Title + Question \texttt{[SEP]} Answer \texttt{[SEP]}
+        };
+        \node[annot, right=0.3cm of input] {$\mathbb{R}^{1024}$};
         
         % Encoder
-        \node[box, fill=green!15, below=of input] (encoder) {DeBERTa-v3-Large Encoder (24 layers)};
+        \node[mainbox, fill=green!8, draw=green!50, below=of input] (encoder) {
+            DeBERTa-v3-Large Encoder
+        };
+        \node[annot, right=0.3cm of encoder] {24 layers};
         
-        % Hidden states
-        \node[box, fill=yellow!15, below=of encoder] (hidden) {Hidden States (Last 4 Layers)};
+        % Hidden states with visual representation
+        \node[mainbox, fill=yellow!10, draw=yellow!60, below=of encoder] (hidden) {
+            Hidden States (Last 4 Layers)
+        };
+        \node[annot, right=0.3cm of hidden] {$4 \times 1024 \times 1024$};
         
-        % WLP
-        \node[box, fill=orange!15, below=of hidden] (wlp) {Weighted Layer Pooling};
+        % Weighted Layer Pooling
+        \node[mainbox, fill=orange!10, draw=orange!50, below=of hidden] (wlp) {
+            Weighted Layer Pooling
+        };
+        \node[annot, right=0.3cm of wlp] {learnable $\mathbf{w} \in \mathbb{R}^4$};
         
         % Attention Pooling
-        \node[box, fill=red!15, below=of wlp] (attn) {Attention Pooling};
+        \node[mainbox, fill=red!8, draw=red!40, below=of wlp] (attn) {
+            Attention Pooling
+        };
+        \node[annot, right=0.3cm of attn] {$\mathbb{R}^{1024} \rightarrow \mathbb{R}^{1024}$};
         
-        % Output
-        \node[box, fill=purple!15, below=of attn] (output) {Linear Head $\rightarrow$ 30 Outputs};
+        % Multi-Sample Dropout
+        \node[mainbox, fill=violet!8, draw=violet!40, below=of attn] (dropout) {
+            Multi-Sample Dropout ($\times 5$)
+        };
+        \node[annot, right=0.3cm of dropout] {$p=0.1$};
         
-        % Arrows
+        % Output Head
+        \node[mainbox, fill=purple!10, draw=purple!50, below=of dropout] (output) {
+            Linear Head $\rightarrow$ 30 Outputs
+        };
+        \node[annot, right=0.3cm of output] {$\mathbb{R}^{1024} \rightarrow \mathbb{R}^{30}$};
+        
+        % Arrows with clean styling
         \draw[arrow] (input) -- (encoder);
         \draw[arrow] (encoder) -- (hidden);
         \draw[arrow] (hidden) -- (wlp);
         \draw[arrow] (wlp) -- (attn);
-        \draw[arrow] (attn) -- (output);
+        \draw[arrow] (attn) -- (dropout);
+        \draw[arrow] (dropout) -- (output);
+        
     \end{tikzpicture}
-    \caption{Our model architecture. Input tokens are processed by DeBERTa-v3-Large, then the last 4 hidden layers are aggregated via Weighted Layer Pooling, followed by Attention Pooling to produce a fixed-size representation for the final linear head.}
+    \caption{Our model architecture. Input tokens are processed by DeBERTa-v3-Large, then the last 4 hidden layers are aggregated via Weighted Layer Pooling. Attention Pooling produces a fixed-size representation, which is passed through Multi-Sample Dropout (5 parallel dropout masks, averaged) before the final linear head.}
     \label{fig:architecture}
 \end{figure}
 
@@ -234,7 +268,50 @@ The final loss is a weighted combination of ranking-aware objectives:
 
 
 \subsection{Training Strategy}
-We adopt the baseline's effective \textbf{Two-Phase Training} strategy. In Phase 1, we train the model for 5 epochs on Question-Only data to stabilize the encoder's understanding of the question context. In Phase 2, we train for another 5 epochs on the full Question-Answer pairs.
+We adopt the baseline's effective \textbf{Two-Phase Training} strategy. In Phase 1, we train the model for 5 epochs on Question-Only data to stabilize the encoder's understanding of the question context. In Phase 2, we train for another 5 epochs on the full Question-Answer pairs. Figure \ref{fig:two_phase} illustrates this process.
+
+\begin{figure}[h]
+    \centering
+    \begin{tikzpicture}[
+        phase/.style={
+            rectangle, draw=gray!70, rounded corners=4pt,
+            minimum width=3.2cm, minimum height=1.8cm,
+            align=center, font=\small\sffamily,
+            line width=0.8pt
+        },
+        label/.style={font=\footnotesize\sffamily\bfseries},
+        detail/.style={font=\tiny\sffamily, text=gray!70, align=center},
+        arrow/.style={->, >=stealth, very thick, draw=gray!50}
+    ]
+        % Phase 1
+        \node[phase, fill=blue!8, draw=blue!40] (p1) {
+            \textbf{Phase 1}\\[2pt]
+            Question-Only\\[1pt]
+            {\tiny 5 epochs}
+        };
+        \node[detail, below=0.15cm of p1] (p1detail) {
+            Input: \texttt{[CLS] Q [SEP]}\\
+            Output: 21 labels
+        };
+        
+        % Phase 2
+        \node[phase, fill=green!8, draw=green!50, right=1.5cm of p1] (p2) {
+            \textbf{Phase 2}\\[2pt]
+            Question + Answer\\[1pt]
+            {\tiny 5 epochs}
+        };
+        \node[detail, below=0.15cm of p2] (p2detail) {
+            Input: \texttt{[CLS] Q [SEP] A [SEP]}\\
+            Output: 30 labels
+        };
+        
+        % Arrow
+        \draw[arrow] (p1.east) -- (p2.west);
+        
+    \end{tikzpicture}
+    \caption{Two-Phase Training strategy. Phase 1 trains on question context only (21 question-related labels) to build robust representations. Phase 2 fine-tunes on full Q\&A pairs (all 30 labels).}
+    \label{fig:two_phase}
+\end{figure}
 
 
 \section{Experiments}
