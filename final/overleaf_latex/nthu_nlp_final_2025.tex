@@ -54,6 +54,8 @@
 \usepackage{nicefrac}       % compact symbols for 1/2, etc.
 \usepackage{microtype}      % microtypography
 \usepackage{xcolor}         % colors
+\usepackage{graphicx}       % images
+\graphicspath{ {images/} }
 
 % Note. For the workshop paper template, both \title{} and \workshoptitle{} are required, with the former indicating the paper title shown in the title and the latter indicating the workshop title displayed in the footnote. 
 \title{Google QUEST Q\&A Labeling \\ \vspace{2mm} \Large Team NTU SPML}
@@ -100,10 +102,33 @@
 
 
 \section{Task Description}
-% Describe the Google QUEST Q&A Labeling task.
-% What is the goal? What is the input and output?
-% What are the evaluation metrics?
 
+The Google QUEST Q\&A Labeling competition challenges participants to improved automated methods for estimating the quality of question-answer pairs from the StackExchange dataset. The goal is to predict human-generated quality scores for various subjective aspects of Q\&A pairs.
+
+\subsection{Problem Definition}
+This is a multi-label regression task. For each sample, the input consists of a question title, a question body, and an answer. The output is a set of 30 scalar values in the range $[0, 1]$, representing 30 distinct quality labels. These labels cover two main categories:
+\begin{enumerate}
+    \item \textbf{Question Ratings}: 21 labels evaluating the question's intent, type (e.g., instructional, conversational), and quality (e.g., well-written, helpful).
+    \item \textbf{Answer Ratings}: 9 labels evaluating the answer's quality (e.g., helpfulness, plausibility, detailedness).
+\end{enumerate}
+
+\subsection{Evaluation Metric}
+The performance is evaluated using the \textbf{Spearman's rank correlation coefficient}. The Spearman correlation is calculated for each of the 30 target columns between the predicted and ground truth values. The final score is the mean of these 30 column-wise correlations. This metric emphasizes the relative ranking of predictions rather than their absolute values, which poses a unique challenge for standard regression loss functions like Mean Squared Error (MSE) or Binary Cross Entropy (BCE).
+
+\subsection{Key Challenges}
+\begin{itemize}
+    \item \textbf{Subjectivity}: The labels are derived from human raters and often represent subjective opinions rather than objective truths, introducing label noise.
+    \item \textbf{Data Scarcity}: The dataset contains approximately 6,000 training samples and fewer than 500 test samples, creating a high risk of overfitting.
+    \item \textbf{Correlation Sensitivity}: The Spearman metric requires the model to correctly rank samples, making it sensitive to distribution shifts and requiring ranking-aware optimization.
+\end{itemize}
+
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\textwidth]{human_computable_dimensions.png}
+    \caption{Human Computable Dimensions. Humans excel at subjective questions requiring multidimensional understanding, whereas computers traditionally struggle.}
+    \label{fig:human_dims}
+\end{figure}
 
 \section{Related Works}
 % Discuss other Kaggle codes or academic papers related to this task.
