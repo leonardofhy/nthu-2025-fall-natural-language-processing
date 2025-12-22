@@ -185,6 +185,23 @@ Increasing the sequence length to 1024 (Step 1) provided an immediate recovery a
   \end{tabular}
 \end{table}
 
+\subsection{Discussion}
+\subsubsection{The CV vs LB Paradox}
+Observing Table \ref{tab:results}, we note a paradox: while our final single-model CV score (\textbf{0.4228}) surpasses the baseline's CV (0.4195), our Private Leaderboard (LB) score (0.4066) is lower than the baseline's (0.4144).
+
+\textbf{Explanation: The 2-Hour Inference Limit.} The competition imposes a strict 2-hour limit on inference. The baseline uses the lightweight \texttt{bert-base-uncased} architecture (110M parameters). This computational efficiency allowed the baseline solution to employ \textbf{Snapshot Ensembling}, averaging predictions from over 30 model checkpoints within the time limit. Ensembling is known to significantly boost generalization and stability, directly improving the LB score.
+
+In contrast, our solution uses \texttt{deberta-v3-large} (435M parameters), which is significantly more computationally expensive. Due to the 2-hour constraint, we were limited to identifying and submitting a \textbf{single best model}. While our single model demonstrates superior quality per parameter (evidenced by the higher CV), it lacks the variance-reduction benefits of an ensemble.
+
+\textbf{Conclusion:} We successfully improved the \textbf{model quality} through architectural and objective optimizations, but the baseline maintained an advantage in \textbf{ensemble capacity} due to the specific inference time constraints of this competition.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\textwidth]{lb_screenshot.png}
+    \caption{Kaggle Leaderboard Screenshot. Showing our final position and score compared to the baseline.}
+    \label{fig:lb_score}
+\end{figure}
+
 
 \section{Conclusion}
 In this report, we demonstrated that modernizing the backbone architecture to DeBERTa-v3 and, crucially, aligning the training objectives with the ranking nature of the task are key to improving performance on the Google QUEST Q\&A Labeling challenge. We showed that simple MSE/BCE losses are insufficient for subjective scoring tasks and that a Ranking + Soft Spearman loss significantly boosts correlation. Additionally, we highlighted the importance of sufficient context length (1024 tokens) for Transformer-based models to effective process long Q\&A pairs. Future work could explore advanced post-processing techniques such as distribution matching or stacking to further bridge the gap between CV and Private Leaderboard scores.
