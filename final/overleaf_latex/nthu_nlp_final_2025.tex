@@ -62,7 +62,8 @@
 \graphicspath{ {images/} }
 
 % Note. For the workshop paper template, both \title{} and \workshoptitle{} are required, with the former indicating the paper title shown in the title and the latter indicating the workshop title displayed in the footnote. 
-\title{Google QUEST Q\&A Labeling \\ \vspace{2mm} \Large Team NTU SPML}
+\title{Soft Spearman Loss for \\ Subjective Q\&A Quality Estimation \\ 
+\vspace{2mm} \large A Solution for the Google QUEST Challenge}
 
 
 % The \author macro works with any number of authors. There are two commands
@@ -75,17 +76,9 @@
 
 
 \author{%
-  Shu-wen Yang \\
-  National Taiwan University \\
-  Taiwan \\
-  \And
-  Yi-Cheng Lin \\
-  National Taiwan University \\
-  Taiwan \\
-  \And
-  Leonardo Haw-Yang Foo \\
-  National Taiwan University \\
-  Taiwan \\
+  Shu-wen Yang \quad Yi-Cheng Lin \quad Leonardo Haw-Yang Foo \\
+  National Taiwan University, Taiwan \\
+  \textit{Team NTU SPML}
 }
 
 
@@ -156,11 +149,11 @@ Table \ref{tab:comparison} summarizes the differences between the baseline and o
 The baseline's primary limitation is its reliance on BERT's 512-token context window, leading to truncation of longer Q\&A pairs. Furthermore, while BCE serves as a reasonable regression surrogate, it does not directly optimize the Spearman correlation used for evaluation.
 
 \section{Methods}
-We introduce four improvements over the baseline: (1) a more expressive backbone, (2) an enhanced pooling strategy, (3) extended context length, and (4) ranking-aware optimization.
+We introduce four key improvements over the baseline: (1) a more expressive backbone architecture, (2) an enhanced pooling strategy, (3) extended context length, and (4) a ranking-aware optimization objective.
 
 \subsection{Model Architecture}
-We replace the BERT backbone with DeBERTa-v3-Large [1]. DeBERTa employs a disentangled attention mechanism that decouples content and positional representations, enabling improved modeling of long-range dependencies between questions and answers.
-Figure \ref{fig:architecture} illustrates the architecture.
+We replace the BERT backbone with DeBERTa-v3-Large [1]. DeBERTa employs a disentangled attention mechanism that decouples content and positional representations, enabling more effective modeling of long-range dependencies between questions and answers.
+Figure~\ref{fig:architecture} illustrates our model architecture.
 
 \begin{figure}[h]
     \centering
@@ -229,38 +222,38 @@ Figure \ref{fig:architecture} illustrates the architecture.
         \draw[arrow] (dropout) -- (output);
         
     \end{tikzpicture}
-    \caption{Model architecture overview. Input tokens are encoded by DeBERTa-v3-Large. The last four hidden layers are aggregated via Weighted Layer Pooling, followed by Attention Pooling to produce a fixed-size representation. Multi-Sample Dropout [9] (5 masks, averaged) is applied before the linear classification head.}
+    \caption{Model architecture overview. Input tokens are encoded by DeBERTa-v3-Large, and hidden states from the last four layers are aggregated via Weighted Layer Pooling. Attention Pooling subsequently produces a fixed-dimensional representation. Multi-Sample Dropout [9] with 5 masks (averaged) is applied before the linear prediction head.}
     \label{fig:architecture}
 \end{figure}
 
 
 
 \subsection{Pooling Strategy}
-In contrast to the baseline's [CLS]+[SEP] concatenation, we employ \textbf{Weighted Layer Pooling} followed by \textbf{Attention Pooling}. Hidden states from the last four encoder layers are aggregated via a learnable weighted average. The resulting embeddings are then processed by an Attention Pooling layer, which learns to weight tokens by their informativeness, producing a fixed-size representation for downstream classification.
+In contrast to the baseline's \texttt{[CLS]}+\texttt{[SEP]} concatenation, we employ \textbf{Weighted Layer Pooling} followed by \textbf{Attention Pooling}. Hidden states from the last four encoder layers are first aggregated via a learnable weighted average. The resulting token embeddings are subsequently processed by an Attention Pooling layer, which assigns learned attention weights to tokens based on their informativeness, producing a fixed-dimensional representation for downstream prediction.
 
 \subsection{Context Length Extension}
-The baseline's 512-token limit constitutes a significant bottleneck, as longer Q\&A pairs are truncated. We extend the maximum sequence length to \textbf{1024 tokens}, allowing the model to attend to complete question bodies and answers simultaneously. This is particularly important for dimensions such as ``detailedness'' and ``relevance,'' which require access to full context.
+The baseline's 512-token limit constitutes a significant bottleneck, as longer Q\&A pairs are truncated and critical context is lost. We extend the maximum sequence length to \textbf{1,024 tokens}, enabling the model to attend to complete question bodies and answers simultaneously. This extension is particularly beneficial for evaluating dimensions such as ``level\_of\_detail'' and ``relevance,'' which inherently require access to the complete textual context.
 
 \subsection{Optimization Objectives}
-The evaluation metric, Spearman rank correlation, depends on the relative ordering of predictions rather than their absolute values. The baseline employs a combined Ranking and BCE loss. While the ranking component aligns with the metric, BCE penalizes absolute error, which is suboptimal given the inherent label noise. We discard the BCE term ($\lambda_{\text{bce}}=0$) and instead optimize a weighted combination of Ranking Loss and \textbf{Soft Spearman Loss}---a differentiable approximation of Spearman correlation inspired by [4], enabling direct optimization toward the evaluation metric.
+The evaluation metric, Spearman rank correlation, depends on the relative ordering of predictions rather than their absolute values. The baseline employs a combined Ranking and BCE loss: while the ranking component aligns with this metric, BCE penalizes absolute prediction error, which is suboptimal given the inherent noise in subjective human annotations. We therefore discard the BCE term ($\lambda_{\text{bce}}=0$) and instead optimize a weighted combination of Ranking Loss and \textbf{Soft Spearman Loss}---a differentiable approximation of Spearman correlation inspired by Blondel et al.\ [4]---enabling direct optimization of the evaluation metric.
 
-The Soft Spearman Loss approximates discrete ranking via a sigmoid-based soft rank function:
+The Soft Spearman Loss approximates discrete ranking via a sigmoid-based differentiable soft rank function:
 \begin{equation}
     r_i^{\text{soft}} = \sum_{j} \sigma\left(\frac{x_i - x_j}{\tau}\right)
 \end{equation}
-where $\tau$ is a temperature parameter controlling approximation sharpness. The loss is defined as:
+where $\tau$ is a temperature parameter controlling approximation sharpness, $x_i$ and $x_j$ denote prediction scores, and $\sigma(\cdot)$ is the sigmoid function. The loss is defined as:
 \begin{equation}
     \mathcal{L}_{\text{soft-spearman}} = 1 - \rho(r^{\text{soft}}_{\text{pred}}, r^{\text{soft}}_{\text{target}})
 \end{equation}
 where $\rho$ denotes Pearson correlation computed over soft ranks.
-The overall training objective is a weighted sum of ranking-aware losses:
+The overall training objective is formulated as a weighted sum of these ranking-aware loss components:
 \begin{equation}
     \mathcal{L} = \lambda_{\text{rank}} \mathcal{L}_{\text{ranking}} + \lambda_{\text{spearman}} \mathcal{L}_{\text{soft-spearman}}
 \end{equation}
 
 
 \subsection{Training Strategy}
-We retain the baseline's \textbf{two-phase training} strategy, as illustrated in Figure \ref{fig:two_phase}. In Phase 1, the model trains for 5 epochs on question-only data to establish robust question representations. In Phase 2, training continues for 5 additional epochs on complete Q\&A pairs.
+We retain the baseline's \textbf{two-phase training} strategy, as illustrated in Figure~\ref{fig:two_phase}. In Phase~1, the model is trained on question-only data (title and body) to establish robust question representations. In Phase~2, training continues on complete Q\&A pairs, incorporating all 30 target dimensions. During ablation experiments (Exp~0--3), we use 3 epochs per phase; the final configuration extends this to 5 epochs per phase to improve model stability and convergence.
 
 \begin{figure}[h]
     \centering
@@ -301,7 +294,7 @@ We retain the baseline's \textbf{two-phase training} strategy, as illustrated in
         \draw[arrow] (p1.east) -- (p2.west);
         
     \end{tikzpicture}
-    \caption{Two-phase training strategy. Phase 1 trains on question context only (21 question dimensions) to establish robust representations. Phase 2 fine-tunes on complete Q\&A pairs (all 30 dimensions).}
+    \caption{Two-phase training strategy. Phase~1 trains on question context only (predicting 21 question-related dimensions) to establish robust question representations. Phase~2 fine-tunes on complete Q\&A pairs (predicting all 30 dimensions). Epoch counts: 3+3 for Exp~0--3; 5+5 for Final.}
     \label{fig:two_phase}
 \end{figure}
 
@@ -310,10 +303,10 @@ We retain the baseline's \textbf{two-phase training} strategy, as illustrated in
 \section{Experiments}
 
 \subsection{Experimental Setup}
-We conduct 5-fold cross-validation on the training set. The model is optimized using AdamW [5] with layer-wise learning rate decay ($\gamma=0.9$). Table \ref{tab:hyperparams} lists the hyperparameters.
+We employ 5-fold cross-validation on the training set for model evaluation. Optimization is performed using AdamW [5] with layer-wise learning rate decay ($\gamma = 0.9$). Hyperparameter settings are summarized in Table~\ref{tab:hyperparams}.
 
 \begin{table}[h]
-  \caption{Hyperparameter settings.}
+  \caption{Hyperparameter settings for all experiments. $^\dagger$Exp~0--3 use 3 epochs; Final uses 5 epochs.}
   \label{tab:hyperparams}
   \centering
   \begin{tabular}{lc}
@@ -330,19 +323,19 @@ We conduct 5-fold cross-validation on the training set. The model is optimized u
     $\lambda_{\text{rank}}$ & 1.0 \\
     $\lambda_{\text{spearman}}$ & 0.5 \\
     Spearman Temperature ($\tau$) & 0.1 \\
-    Phase 1 Epochs & 5 \\
-    Phase 2 Epochs & 5 \\
+    Phase 1 Epochs & 3 / 5$^\dagger$ \\
+    Phase 2 Epochs & 3 / 5$^\dagger$ \\
     \bottomrule
   \end{tabular}
 \end{table}
 
 \subsection{Results}
-Table \ref{tab:results} presents experimental results, including Cross-Validation (CV) and Kaggle Leaderboard (LB) scores. The BERT-base baseline serves as our reference point. An initial naive configuration (Exp 0)---switching to DeBERTa-Base with mean pooling while retaining the 512-token context---resulted in a significant performance drop, analyzed below.
+Table~\ref{tab:results} presents experimental results, reporting Cross-Validation (CV) and Kaggle Leaderboard (LB) Spearman correlation scores. The BERT-base baseline serves as our reference point. An initial configuration (Exp~0)---migrating to DeBERTa-Base with modified preprocessing and pooling while retaining the 512-token context limit---resulted in substantial performance degradation. This degradation likely stems from multiple simultaneous changes during the migration process, which we analyze below.
 
-Extending the sequence length to 1024 tokens (Exp 1) yielded immediate recovery (+0.0155), confirming context length as the primary bottleneck. Introducing the Ranking and Soft Spearman losses (Exp 2) produced the largest single improvement (+0.0229), demonstrating the importance of metric-aligned optimization. Scaling to DeBERTa-v3-Large with the full two-phase training schedule (Exp 3/Final) achieved our best single-model CV of \textbf{0.4228}, surpassing the baseline (0.4195).
+Extending the sequence length to 1024 tokens (Exp~1) yielded immediate performance recovery (+0.0155), confirming context length as a primary bottleneck. Incorporating the Ranking Loss and Soft Spearman Loss (Exp~2) produced the largest single improvement (+0.0229), underscoring the importance of metric-aligned optimization. Scaling to DeBERTa-v3-Large (Exp~3) and extending the training schedule to 5+5 epochs (Final) achieved our best single-model CV score of \textbf{0.4228}, surpassing the baseline (0.4195).
 
 \begin{table}[h]
-  \caption{Experimental results. CV Score denotes mean Spearman correlation across 5 folds; LB scores are from Kaggle submissions.}
+  \caption{Experimental results. CV Score denotes the mean Spearman correlation coefficient across 5 folds; LB scores correspond to Kaggle submission results. Missing LB scores indicate experiments not submitted to the leaderboard.}
   \label{tab:results}
   \centering
   \begin{tabular}{llcccc}
@@ -350,33 +343,33 @@ Extending the sequence length to 1024 tokens (Exp 1) yielded immediate recovery 
     \textbf{Exp} & \textbf{Configuration} & \textbf{CV Score} & \textbf{Public LB} & \textbf{Private LB} \\
     \midrule
     Baseline & BERT-Base + 30 Snapshot Ensemble & 0.4195 & 0.4576 & 0.4123 \\
-    Exp 0 & DeBERTa-Base (512, Mean Pool) & 0.3642 & - & - \\
+    Exp 0 & DeBERTa-Base (512, Initial Config) & 0.3642 & - & - \\
     \midrule
     Exp 1 & + Long Context (1024) & 0.3797 & - & - \\
     Exp 2 & + Ranking + Soft Spearman Loss & 0.4026 & - & - \\
     Exp 3 & + DeBERTa-v3-Large & 0.4218 & - & - \\
-    \textbf{Final} & \textbf{+ Full 2-Phase Training} & \textbf{0.4228} & \textbf{0.4447} & \textbf{0.4066} \\
+    \textbf{Final} & \textbf{+ Extended Training (5+5 epochs)} & \textbf{0.4228} & \textbf{0.4447} & \textbf{0.4066} \\
     \bottomrule
   \end{tabular}
 \end{table}
 
-Figure \ref{fig:ablation} visualizes the progressive performance improvements.
+Figure~\ref{fig:ablation} illustrates the progressive performance improvements across the experimental configurations.
 
 \begin{figure}[h]
     \centering
     \includegraphics[width=0.9\textwidth]{ablation_chart.png}
-    \caption{Progressive CV score improvements across experiments. The dashed red line indicates the BERT baseline (0.4195).}
+    \caption{Progressive CV score improvements across successive experiments. The dashed red line denotes the BERT baseline CV score (0.4195).}
     \label{fig:ablation}
 \end{figure}
 
-\paragraph{Ablation Analysis: The Impact of Pooling and Context.}
-The substantial performance degradation observed when naively transitioning from BERT to DeBERTa (0.4195 $\rightarrow$ 0.3642) merits investigation. We identify two compounding factors:
+\paragraph{Analysis of Initial Performance Degradation.}
+The substantial performance degradation observed when migrating from BERT to DeBERTa (0.4195 $\rightarrow$ 0.3642) resulted from \textbf{multiple simultaneous changes} during the migration process, encompassing model architecture, tokenization, pooling strategy, and hyperparameter settings. We identify two contributing factors and validate one through controlled experimentation:
 
-\textbf{Pooling Mismatch.} The baseline explicitly extracts \texttt{[CLS]} and \texttt{[SEP]} token embeddings, encoding the structural boundary between question and answer segments. Our naive DeBERTa implementation applied mean pooling across all tokens, blending question and answer representations into an undifferentiated mixture and losing critical boundary information.
+\textbf{Potential Factor: Pooling Mismatch.} The baseline explicitly extracts \texttt{[CLS]} and \texttt{[SEP]} token embeddings, thereby encoding the structural boundary between question and answer segments. Our initial DeBERTa configuration employed a different pooling approach, potentially discarding segment-boundary information. \textit{This factor was not validated through controlled ablation in the present study.}
 
-\textbf{Context Starvation.} DeBERTa's disentangled attention relies on relative positional information across the full sequence. Truncating inputs to 512 tokens disrupts the long-range dependencies DeBERTa was designed to capture, penalizing it more severely than BERT with its absolute positional encoding.
+\textbf{Validated Factor: Context Length Sensitivity.} DeBERTa's disentangled attention mechanism relies on relative positional information computed across the full input sequence. Truncating inputs to 512 tokens disrupts the long-range dependencies that DeBERTa was specifically designed to capture. \textbf{This factor is directly validated by Exp~1}: extending the sequence length from 512 to 1024 tokens yielded a +0.0155 improvement in CV score.
 
-These findings demonstrate that specific design choices—namely pooling strategy and context length—are prerequisites for leveraging the capacity of larger models. This insight directly motivated our switch to longer context (1024 tokens) and structured attention pooling.
+These findings underscore that migration to a more expressive architecture necessitates careful adaptation of multiple components. Subsequent experiments systematically addressed each factor, with context length extension and loss function optimization yielding the most substantial validated performance gains.
 
 
 \section{Discussion}
@@ -394,6 +387,7 @@ Our approach has the following limitations:
     \item \textbf{Inference Time Constraint:} The 2-hour inference limit precluded checkpoint ensembling, likely contributing to the CV-LB score discrepancy.
     \item \textbf{Limited Baseline Comparison:} Comparison was limited to the 23rd-place solution; evaluation against top-10 solutions would provide broader context.
     \item \textbf{No Post-Processing:} Unlike the baseline, which employs LightGBM stacking [10], we did not apply post-processing.
+    \item \textbf{Incomplete Ablation Study:} Due to the rapid iteration inherent in competition settings, controlled single-variable ablations were not conducted for all factors (e.g., pooling strategy in isolation). Consequently, the reported performance improvements reflect cumulative rather than isolated changes.
 \end{itemize}
 
 \begin{figure}[h]
@@ -411,7 +405,7 @@ This work demonstrates that adopting a modern backbone (DeBERTa-v3-Large) and al
 \begin{enumerate}
     \item \textbf{Metric-aligned optimization is essential:} Replacing BCE with Ranking + Soft Spearman loss substantially improves Spearman correlation.
     \item \textbf{Context length is critical:} Extending maximum sequence length from 512 to 1024 tokens prevents information loss in longer Q\&A pairs.
-    \item \textbf{Architecture alone is insufficient:} Our ablation analysis demonstrates that more expressive architectures cannot compensate for inappropriate pooling or context truncation.
+    \item \textbf{Architecture migration requires systematic adaptation:} Simply substituting a more expressive backbone is insufficient; context length and training objectives must be co-optimized for the target task.
 \end{enumerate}
 
 While our single-model CV (0.4228) surpasses the baseline (0.4195), the Private LB score (0.4066) is lower than the baseline (0.4123) due to inference time constraints. Future work may explore model distillation or quantization to enable efficient checkpoint ensembling within the 2-hour limit.
