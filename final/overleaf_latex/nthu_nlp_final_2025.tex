@@ -275,17 +275,15 @@ We retain the baseline's \textbf{two-phase training} strategy, as illustrated in
         % Metadata below
         \node[below=0.2cm of p1, align=center, font=\tiny\ttfamily, color=gray!80] {
             Input: [CLS] Q [SEP] \\ 
-            Task: 21 Q-labels \\
-            Epochs: 5
+            Task: 21 Q-labels
         };
         \node[below=0.2cm of p2, align=center, font=\tiny\ttfamily, color=gray!80] {
             Input: [CLS] Q [SEP] A [SEP] \\ 
-            Task: 30 Labels (Total) \\
-            Epochs: 5
+            Task: 30 Labels (Total)
         };
 
     \end{tikzpicture}
-    \caption{Two-phase training strategy. Phase~1 trains on question context only (predicting 21 question-related dimensions) to establish robust question representations. Phase~2 fine-tunes on complete Q\&A pairs (predicting all 30 dimensions). Epoch counts: 3+3 for Exp~0--3; 5+5 for Final.}
+    \caption{Two-phase training strategy. Phase~1 trains on question context only (predicting 21 question-related dimensions) to establish robust question representations. Phase~2 fine-tunes on complete Q\&A pairs (predicting all 30 dimensions). Epoch counts (Phase~1 + Phase~2): 3+3 for Exp~0--3; 5+5 for Final.}
     \label{fig:two_phase}
 \end{figure}
 
