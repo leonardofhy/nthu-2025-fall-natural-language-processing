@@ -182,32 +182,29 @@ Figure~\ref{fig:architecture} illustrates our model architecture.
 
         % Nodes
         \node[layer, input_clr] (input) {Input Tokens};
-        \node[dim_note, right=0.5cm of input] (d1) {$\mathbb{R}^{1024 \times 1}$};
+        \node[dim_note, right=0.5cm of input] (d1) {max 1024 tokens};
 
         \node[layer, encoder_clr, below=of input] (encoder) {DeBERTa-v3-Large};
-        \node[dim_note, right=0.5cm of encoder] (d2) {24 Layers};
+        \node[dim_note, right=0.5cm of encoder] (d2) {24 layers};
 
         \node[layer, encoder_clr, fill=yellow!5, below=of encoder] (hidden) {Last 4 Hidden States};
-        \node[dim_note, right=0.5cm of hidden] (d3) {$4 \times 1024 \times 1024$};
 
         \node[layer, pool_clr, below=of hidden] (wlp) {Weighted Layer Pooling};
-        \node[dim_note, right=0.5cm of wlp] (d4) {$\mathbf{w} \in \mathbb{R}^4$};
 
         \node[layer, pool_clr, below=of wlp] (attn) {Attention Pooling};
-        \node[dim_note, right=0.5cm of attn] (d5) {$\mathbb{R}^{1024} \rightarrow \mathbb{R}^{1024}$};
 
         \node[layer, head_clr, fill=purple!5, below=of attn] (dropout) {Multi-Sample Dropout ($\times 5$)};
         \node[dim_note, right=0.5cm of dropout] (d6) {$p=0.1$};
 
         \node[layer, head_clr, below=of dropout] (output) {Linear Output Head};
-        \node[dim_note, right=0.5cm of output] (d7) {30 Q\&A Dimensions};
+        \node[dim_note, right=0.5cm of output] (d7) {30 targets};
 
         % Arrows
         \foreach \s/\t in {input/encoder, encoder/hidden, hidden/wlp, wlp/attn, attn/dropout, dropout/output}
             \draw[arrow] (\s) -- (\t);
 
         % Input Text Detail Box (Optional, added for clarity)
-        \node[font=\tiny\ttfamily, color=gray!60, below=0.05cm of input] {[CLS] Title + Q [SEP] Ans [SEP]};
+        \node[font=\tiny\ttfamily, color=gray!60, below=0.05cm of input] {[CLS] Question [SEP] Answer [SEP]};
 
     \end{tikzpicture}
     \caption{Model architecture overview. Input tokens are encoded by DeBERTa-v3-Large, and hidden states from the last four layers are aggregated via Weighted Layer Pooling. Attention Pooling subsequently produces a fixed-dimensional representation. Multi-Sample Dropout [7] with 5 masks (averaged) is applied before the linear prediction head.}
