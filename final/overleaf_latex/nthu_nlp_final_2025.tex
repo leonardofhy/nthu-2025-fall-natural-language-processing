@@ -108,7 +108,7 @@ The task is formulated as multi-output regression. Each sample comprises a quest
 \end{enumerate}
 
 \subsection{Evaluation Metric}
-Performance is measured by the \textbf{Spearman rank correlation coefficient}. For each of the 30 target dimensions, the Spearman correlation between predictions and ground truth is computed; the final score is the mean across all dimensions. This metric prioritizes relative ranking over absolute values, posing a challenge for standard regression losses such as Mean Squared Error (MSE) and Binary Cross Entropy (BCE).
+Performance is measured by the \textbf{Spearman rank correlation coefficient} [10]. For each of the 30 target dimensions, the Spearman correlation between predictions and ground truth is computed; the final score is the mean across all dimensions. This metric prioritizes relative ranking over absolute values, posing a challenge for standard regression losses such as Mean Squared Error (MSE) and Binary Cross Entropy (BCE).
 
 \subsection{Key Challenges}
 \begin{itemize}
@@ -434,6 +434,8 @@ Experiments were conducted on a workstation with two NVIDIA RTX PRO 6000 Blackwe
 [8] Ke, G., Meng, Q., Finley, T., Wang, T., Chen, W., Ma, W., Ye, Q., \& Liu, T.-Y. (2017). LightGBM: A Highly Efficient Gradient Boosting Decision Tree. In {\it Advances in Neural Information Processing Systems}, vol.\ 30, pp.\ 3146--3154.
 
 [9] Google. (2020). Google QUEST Q\&A Labeling. {\it Kaggle Competition}. \url{https://www.kaggle.com/competitions/google-quest-challenge}
+
+[10] Spearman, C. (1904). The proof and measurement of association between two things. {\it The American Journal of Psychology}, 15(1), 72--101. \url{https://doi.org/10.2307/1412159}
 }
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
