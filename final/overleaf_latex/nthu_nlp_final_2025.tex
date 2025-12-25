@@ -214,7 +214,11 @@ Figure~\ref{fig:architecture} illustrates our model architecture.
 
 
 \subsection{Pooling Strategy}
-In contrast to the baseline's \texttt{[CLS]}+\texttt{[SEP]} concatenation, we employ \textbf{Weighted Layer Pooling} followed by \textbf{Attention Pooling}. Hidden states from the last four encoder layers are first aggregated via a learnable weighted average. The resulting token embeddings are subsequently processed by an Attention Pooling layer, which assigns learned attention weights to tokens based on their informativeness, producing a fixed-dimensional representation for downstream prediction.
+In contrast to the baseline's \texttt{[CLS]}+\texttt{[SEP]} concatenation, we employ \textbf{Weighted Layer Pooling} followed by \textbf{Attention Pooling}. Hidden states from the last four encoder layers are first aggregated via a learnable weighted average. The resulting token embeddings are subsequently processed by an Attention Pooling layer, which computes attention scores via a two-layer feedforward network:
+\begin{equation}
+    \alpha_i = \text{softmax}\left(\mathbf{w}^\top \tanh(\mathbf{W} \mathbf{h}_i)\right), \quad \mathbf{p} = \sum_{i} \alpha_i \mathbf{h}_i
+\end{equation}
+where $\mathbf{h}_i$ denotes the $i$-th token embedding, $\mathbf{W}$ and $\mathbf{w}$ are learnable parameters, and $\mathbf{p}$ is the pooled representation.
 
 \subsection{Context Length Extension}
 The baseline's 512-token limit constitutes a significant bottleneck, as longer Q\&A pairs are truncated and critical context is lost. We extend the maximum sequence length to \textbf{1,024 tokens}, enabling the model to attend to complete question bodies and answers simultaneously. This extension is particularly beneficial for evaluating dimensions such as ``level\_of\_detail'' and ``relevance,'' which inherently require access to the complete textual context.
@@ -231,6 +235,13 @@ where $\tau$ is a temperature parameter controlling approximation sharpness, $x_
     \mathcal{L}_{\text{soft-spearman}} = 1 - \rho(r^{\text{soft}}_{\text{pred}}, r^{\text{soft}}_{\text{target}})
 \end{equation}
 where $\rho$ denotes Pearson correlation computed over soft ranks.
+
+The Ranking Loss employs a pairwise margin formulation. For each pair of samples $(i, j)$ within a batch:
+\begin{equation}
+    \mathcal{L}_{\text{ranking}} = \frac{1}{|P|}\sum_{(i,j) \in P} \max\left(0, m - \text{sign}(y_i - y_j)(\hat{y}_i - \hat{y}_j)\right)
+\end{equation}
+where $m$ is the margin hyperparameter and $P$ denotes the set of sample pairs.
+
 The overall training objective is formulated as a weighted sum of these ranking-aware loss components:
 \begin{equation}
     \mathcal{L} = \lambda_{\text{rank}} \mathcal{L}_{\text{ranking}} + \lambda_{\text{spearman}} \mathcal{L}_{\text{soft-spearman}}

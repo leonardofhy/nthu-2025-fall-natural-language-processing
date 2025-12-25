@@ -4,32 +4,23 @@
 
 ---
 
-## 待處理建議
-
-### 7. Section 3.2 - Attention Pooling 公式
-- **重要性**：⭐⭐⭐ 中
-- **難度**：🔧 中等
-- **問題**：缺乏 Attention Pooling 的具體數學定義。
-- **建議**：補充 Attention 權重計算的公式。
-- **狀態**：❌ 待處理
-
-### 8. Section 3.4 - Ranking Loss 定義
-- **重要性**：⭐⭐⭐ 中
-- **難度**：🔧 中等
-- **問題**：文中提到了 $\mathcal{L}_{\text{ranking}}$ 但沒有給出具體定義或引用。
-- **建議**：提供簡短的公式說明或相關引用。
-- **狀態**：❌ 待處理
-
-### 9. Table 3 - "Final" 命名含義
-- **重要性**：⭐⭐ 低
-- **難度**：🔨 簡單
-- **問題**：結果表格中從 Exp 3 跳到 Final，讀者可能不解其間關係。
-- **建議**：在正文或 Caption 說明 Final 對應的是經由 Extended Training 優化後的模型。
-- **狀態**：❌ 待處理
-
 ---
 
 ## 已完成建議
+
+### ~~7. Section 3.2 - Attention Pooling 公式~~ ✅
+- **重要性**：⭐⭐⭐ 中
+- **難度**：🔧 中等
+- **問題**：缺乏 Attention Pooling 的具體數學定義
+- **解決方案**：加入 $\alpha_i = \text{softmax}(\mathbf{w}^\top \tanh(\mathbf{W}\mathbf{h}_i))$ 公式
+- **狀態**：✅ 已完成
+
+### ~~8. Section 3.4 - Ranking Loss 定義~~ ✅
+- **重要性**：⭐⭐⭐ 中
+- **難度**：🔧 中等
+- **問題**：$\mathcal{L}_{\text{ranking}}$ 沒有定義
+- **解決方案**：加入 Pairwise Margin Ranking Loss 公式
+- **狀態**：✅ 已完成
 
 ### ~~10. Figure 1 & 2 輸入格式一致化~~ ✅
 - **重要性**：⭐ 低 (視覺性問題)
