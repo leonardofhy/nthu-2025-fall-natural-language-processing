@@ -108,7 +108,7 @@ The task is formulated as multi-output regression. Each sample comprises a quest
 \end{enumerate}
 
 \subsection{Evaluation Metric}
-Performance is measured by the \textbf{Spearman rank correlation coefficient} [10]. For each of the 30 target dimensions, the Spearman correlation between predictions and ground truth is computed; the final score is the mean across all dimensions. This metric prioritizes relative ranking over absolute values, posing a challenge for standard regression losses such as Mean Squared Error (MSE) and Binary Cross Entropy (BCE).
+Performance is measured by the \textbf{Spearman rank correlation coefficient} [10]. For each of the 30 target dimensions, the Spearman correlation between predictions and ground truth is computed; the final score is the mean across all dimensions. This metric prioritizes relative ranking over absolute values, posing a challenge for standard regression losses such as Mean Squared Error (MSE) and Binary Cross Entropy (BCE), which optimize point-wise errors without explicitly preserving ordinal relationships.
 
 \subsection{Key Challenges}
 \begin{itemize}
