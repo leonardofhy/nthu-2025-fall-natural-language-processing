@@ -114,7 +114,7 @@ Performance is measured by the \textbf{Spearman rank correlation coefficient} [1
 \begin{itemize}
     \item \textbf{Subjectivity}: Labels are derived from human annotators and reflect subjective judgments, introducing inherent label noise.
     \item \textbf{Data Scarcity}: With approximately 6,000 training and fewer than 500 test samples, the dataset poses a significant overfitting risk.
-    \item \textbf{Ranking Sensitivity}: The Spearman metric requires correct relative ordering of predictions, making it sensitive to distribution shifts and necessitating ranking-aware optimization.
+    \item \textbf{Ranking Sensitivity}: The Spearman metric depends on relative ordering across the entire prediction set, rather than individual absolute errors. Consequently, even small distribution shifts between training and test sets can disproportionately affect ranking accuracy, necessitating ranking-aware optimization.
 \end{itemize}
 
 

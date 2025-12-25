@@ -6,13 +6,6 @@
 
 ## 待處理建議
 
-### 3. Section 1.3 - Ranking Sensitivity to Distribution Shift
-- **重要性**：⭐⭐⭐⭐ 高 (影響技術嚴謹性)
-- **難度**：🔧 中等
-- **問題**：「ranking sensitive to distribution shift」的原因說明不夠清楚
-- **建議**：補充解釋為什麼 ranking 會特別對 distribution shift 敏感 (相較於 absolute error)
-- **狀態**：❌ 待處理
-
 ### 1. Section 1.2 - SRCC vs MSE 的挑戰性
 - **重要性**：⭐⭐⭐ 中
 - **難度**：🔨 簡單
@@ -32,6 +25,13 @@
 ---
 
 ## 已完成建議
+
+### ~~3. Section 1.3 - Ranking Sensitivity~~ ✅
+- **重要性**：⭐⭐⭐⭐ 高 (影響技術嚴謹性)
+- **難度**：🔧 中等
+- **問題**：「ranking sensitive to distribution shift」的原因說明不夠清楚
+- **解決方案**：補充說明 ranking 依賴全局排序而非單點誤差，因此對 distribution shift 特別敏感
+- **狀態**：✅ 已完成
 
 ### ~~4. Table 1 - 術語未提前定義~~ ✅
 - **重要性**：⭐⭐⭐⭐⭐ 很高 (影響讀者理解)
