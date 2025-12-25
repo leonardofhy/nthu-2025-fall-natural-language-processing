@@ -6,14 +6,6 @@
 
 ## 待處理建議
 
-### 4. Table 1 - 術語未提前定義
-- **重要性**：⭐⭐⭐⭐⭐ 很高 (影響讀者理解)
-- **難度**：🔧 中等
-- **問題**：Summary 中有些名詞在 Table 1 出現時還沒被介紹過
-- **範例**：`ranking loss`, `WLP` 等術語
-- **建議**：在 Table 1 之前先定義這些術語，或在表格中加上簡短說明
-- **狀態**：❌ 待處理
-
 ### 3. Section 1.3 - Ranking Sensitivity to Distribution Shift
 - **重要性**：⭐⭐⭐⭐ 高 (影響技術嚴謹性)
 - **難度**：🔧 中等
@@ -40,6 +32,13 @@
 ---
 
 ## 已完成建議
+
+### ~~4. Table 1 - 術語未提前定義~~ ✅
+- **重要性**：⭐⭐⭐⭐⭐ 很高 (影響讀者理解)
+- **難度**：🔧 中等
+- **問題**：Summary 中有些名詞在 Table 1 出現時還沒被介紹過
+- **解決方案**：在 Table 1 caption 加入 forward reference：「WLP (Weighted Layer Pooling) and Soft Spearman Loss are detailed in Sections 3.2 and 3.4, respectively.」
+- **狀態**：✅ 已完成
 
 ### ~~6. Figure 2 - Epoch 數量標註~~ ✅
 - **重要性**：⭐⭐ 低
